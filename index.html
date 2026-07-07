@@ -62,7 +62,7 @@
   .wrap{max-width:820px;margin:0 auto;padding:0 20px}
 
   /* ---------- Header ---------- */
-  header{position:relative;text-align:center;padding:48px 20px 28px}
+  header{position:relative;text-align:center;padding:68px 20px 28px}
   .logo{
     display:inline-flex;align-items:center;gap:12px;
     font-family:'Fredoka',sans-serif;font-weight:700;
@@ -251,31 +251,56 @@
   footer a{color:var(--grape-deep)}
   .note{font-size:13px;color:var(--muted-soft);font-weight:700;margin-top:14px;text-align:center}
 
-  /* ---------- Theme toggle ---------- */
-  .theme-toggle{
-    position:fixed;top:16px;right:16px;z-index:50;
-    display:flex;align-items:center;gap:8px;
+  /* ---------- Top controls (taal + thema) — vast rechtsboven ---------- */
+  .top-controls{
+    position:fixed;top:14px;right:14px;z-index:60;
+    display:flex;gap:8px;align-items:flex-start;
+  }
+  .ctrl-btn{
+    display:flex;align-items:center;gap:7px;
     font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;
     color:var(--ink);cursor:pointer;
     background:var(--card);border:2.5px solid var(--ink);border-radius:40px;
-    padding:8px 16px 8px 12px;box-shadow:var(--shadow-hard);
+    padding:8px 14px;box-shadow:var(--shadow-hard);
     transition:transform .1s,box-shadow .1s,background-color .3s,color .3s;
   }
-  .theme-toggle:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
-  .theme-toggle:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
-  .theme-toggle .icon{font-size:18px;line-height:1}
-  .theme-toggle .lbl-dark{display:none}
-  [data-theme="dark"] .theme-toggle .lbl-light{display:none}
-  [data-theme="dark"] .theme-toggle .lbl-dark{display:inline}
+  .ctrl-btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+  .ctrl-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+  .ctrl-btn .icon{font-size:18px;line-height:1}
+  .ctrl-btn .caret{font-size:12px;opacity:.6}
+  #langFlag{font-size:18px;line-height:1}
+  .lbl-dark{display:none}
+  [data-theme="dark"] .lbl-light{display:none}
+  [data-theme="dark"] .lbl-dark{display:inline}
+
+  .lang-wrap{position:relative}
+  .lang-menu{
+    position:absolute;top:calc(100% + 8px);right:0;
+    background:var(--card);border:2.5px solid var(--ink);border-radius:16px;
+    box-shadow:var(--shadow-hard);padding:6px;min-width:170px;display:none;
+  }
+  .lang-menu.open{display:block}
+  .lang-opt{
+    display:flex;align-items:center;gap:10px;width:100%;
+    background:none;border:none;cursor:pointer;text-align:left;
+    font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:var(--ink);
+    padding:9px 12px;border-radius:10px;
+  }
+  .lang-opt:hover{background:var(--paper)}
+  .lang-opt.active{background:var(--mint);color:var(--on-accent)}
+  .lang-opt .lf{font-size:18px}
 
   /* ---------- Mobiel (≤560px) ---------- */
   @media (max-width:560px){
     body{padding-bottom:60px}
     .wrap{padding:0 14px}
 
-    /* Toggle scrollt mee i.p.v. vast te blijven plakken over de inhoud. */
-    .theme-toggle{position:absolute;top:14px;right:14px;padding:8px 10px;gap:6px;font-size:14px}
-    header{padding:56px 16px 22px}
+    /* Op smalle telefoons alleen de vlag/het icoon tonen, knoppen blijven vast bovenaan. */
+    .top-controls{top:12px;right:12px;gap:6px}
+    .ctrl-btn{padding:8px 11px}
+    .ctrl-btn .txt{display:none}
+    .ctrl-btn .caret{display:none}
+    header{padding:64px 16px 22px}
     .tag{font-size:16px;margin-top:10px}
 
     .card{padding:18px 15px;margin:16px 0;border-radius:18px}
@@ -306,12 +331,18 @@
 </head>
 <body>
 <header>
-  <button class="theme-toggle" id="themeToggle" aria-label="Wissel tussen licht en donker thema">
-    <span class="icon">🌙</span>
-    <span class="txt"><span class="lbl-light">Donker</span><span class="lbl-dark">Licht</span></span>
-  </button>
+  <div class="top-controls">
+    <div class="lang-wrap">
+      <button class="ctrl-btn" id="langToggle" aria-haspopup="true" aria-expanded="false"><span id="langFlag">🇳🇱</span><span class="caret">▾</span></button>
+      <div class="lang-menu" id="langMenu" role="menu"></div>
+    </div>
+    <button class="ctrl-btn" id="themeToggle">
+      <span class="icon">🌙</span>
+      <span class="txt"><span class="lbl-light" data-i18n="themeDark">Donker</span><span class="lbl-dark" data-i18n="themeLight">Licht</span></span>
+    </button>
+  </div>
   <div class="logo">Splitsie<span class="dot"></span></div>
-  <p class="tag">Gooi de bonnetjes op tafel — wij rekenen uit <b>wie wat aan wie betaalt</b>.</p>
+  <p class="tag" data-i18n-html="tag">Gooi de bonnetjes op tafel — wij rekenen uit <b>wie wat aan wie betaalt</b>.</p>
 </header>
 
 <div class="wrap">
@@ -320,85 +351,85 @@
   <div class="banner hidden" id="sharedBanner">
     <span class="banner-ic">👀</span>
     <div class="banner-txt">
-      <b>Je bekijkt een gedeelde afrekening.</b>
-      <span>Wijzigingen worden niet bewaard. Wil je zelf verder rekenen? Maak dan een eigen kopie.</span>
+      <b data-i18n="bannerTitle">Je bekijkt een gedeelde afrekening.</b>
+      <span data-i18n="bannerText">Wijzigingen worden niet bewaard. Wil je zelf verder rekenen? Maak dan een eigen kopie.</span>
     </div>
-    <button class="btn lemon" id="makeCopy">Eigen kopie maken</button>
+    <button class="btn lemon" id="makeCopy" data-i18n="makeCopy">Eigen kopie maken</button>
   </div>
 
   <!-- STEP 1: PEOPLE -->
   <section class="card">
-    <h2><span class="badge b-mint">👥</span> Wie doen er mee?</h2>
-    <p class="sub">Voeg iedereen toe die kosten deelt.</p>
+    <h2><span class="badge b-mint">👥</span> <span data-i18n="peopleTitle">Wie doen er mee?</span></h2>
+    <p class="sub" data-i18n="peopleSub">Voeg iedereen toe die kosten deelt.</p>
     <div class="people" id="peopleList"></div>
     <div class="add-row">
-      <input type="text" id="personName" class="grow" placeholder="Naam, bijv. Sanne" maxlength="24" autocomplete="off">
-      <button class="btn mint" id="addPerson">+ Toevoegen</button>
+      <input type="text" id="personName" class="grow" data-i18n-ph="namePlaceholder" placeholder="Naam, bijv. Sanne" maxlength="24" autocomplete="off">
+      <button class="btn mint" id="addPerson" data-i18n="addPerson">+ Toevoegen</button>
     </div>
-    <button class="linklike" id="clearAll">🗑️ Alles wissen en opnieuw beginnen</button>
+    <button class="linklike" id="clearAll" data-i18n="clearAll">🗑️ Alles wissen en opnieuw beginnen</button>
   </section>
 
   <!-- STEP 2: ADD EXPENSE -->
   <section class="card" id="expenseCard">
-    <h2><span class="badge b-lemon">🧾</span> <span id="expFormTitle">Nieuwe uitgave</span></h2>
-    <p class="sub">Wat is er betaald, door wie, en voor wie?</p>
+    <h2><span class="badge b-lemon">🧾</span> <span id="expFormTitle" data-i18n="expNew">Nieuwe uitgave</span></h2>
+    <p class="sub" data-i18n="expSubForm">Wat is er betaald, door wie, en voor wie?</p>
 
     <div class="field">
-      <label>Wat was het?</label>
-      <input type="text" id="expWhat" placeholder="Boodschappen, taxi, pizza…" maxlength="40" autocomplete="off" style="width:100%">
+      <label data-i18n="whatLabel">Wat was het?</label>
+      <input type="text" id="expWhat" data-i18n-ph="whatPlaceholder" placeholder="Boodschappen, taxi, pizza…" maxlength="40" autocomplete="off" style="width:100%">
     </div>
 
     <div class="add-row stack-sm" style="margin-bottom:14px">
       <div class="field grow" style="margin-bottom:0">
-        <label>Bedrag (€)</label>
+        <label data-i18n="amountLabel">Bedrag (€)</label>
         <input type="number" id="expAmt" placeholder="0,00" min="0" step="0.01" style="width:100%">
       </div>
       <div class="field grow" style="margin-bottom:0">
-        <label>Betaald door</label>
+        <label data-i18n="payerLabel">Betaald door</label>
         <select id="expPayer" style="width:100%"></select>
       </div>
     </div>
 
     <div class="field">
-      <label>Wie deelt in deze kosten?</label>
+      <label data-i18n="splitQ">Wie deelt in deze kosten?</label>
       <div class="split-toggle">
-        <div class="toggle on" id="tgAll" data-mode="all">🌍 Iedereen</div>
-        <div class="toggle pick" id="tgSome" data-mode="some">✋ Bepaalde mensen</div>
-        <div class="toggle custom" id="tgCustom" data-mode="custom">⚖️ Eigen bedragen</div>
+        <div class="toggle on" id="tgAll" data-mode="all" data-i18n="splitAll">🌍 Iedereen</div>
+        <div class="toggle pick" id="tgSome" data-mode="some" data-i18n="splitSome">✋ Bepaalde mensen</div>
+        <div class="toggle custom" id="tgCustom" data-mode="custom" data-i18n="splitCustom">⚖️ Eigen bedragen</div>
       </div>
       <div class="checks hidden" id="shareChecks"></div>
       <div class="customsplit hidden" id="customSplit"></div>
     </div>
 
     <div class="add-row">
-      <button class="btn coral" id="addExpense" style="flex:1">Uitgave opslaan</button>
-      <button class="btn" id="cancelEdit" style="display:none">Annuleren</button>
+      <button class="btn coral" id="addExpense" style="flex:1" data-i18n="saveExpense">Uitgave opslaan</button>
+      <button class="btn" id="cancelEdit" style="display:none" data-i18n="cancel">Annuleren</button>
     </div>
   </section>
 
   <!-- LIST -->
   <section class="card">
-    <h2><span class="badge b-grape">📋</span> Alle uitgaven</h2>
-    <p class="sub" id="expSub">Nog niets ingevoerd.</p>
+    <h2><span class="badge b-grape">📋</span> <span data-i18n="listTitle">Alle uitgaven</span></h2>
+    <p class="sub" id="expSub" data-i18n="listEmptySub">Nog niets ingevoerd.</p>
     <div id="expenseList"></div>
   </section>
 
   <!-- RESULTS -->
   <section class="card">
-    <h2><span class="badge b-coral">✨</span> De afrekening</h2>
-    <p class="sub">Zo min mogelijk overboekingen om iedereen gelijk te trekken.</p>
+    <h2><span class="badge b-coral">✨</span> <span data-i18n="resultsTitle">De afrekening</span></h2>
+    <p class="sub" data-i18n="resultsSub">Zo min mogelijk overboekingen om iedereen gelijk te trekken.</p>
     <div class="totals" id="totals"></div>
     <div class="balances" id="balances"></div>
     <div id="settlements"></div>
     <div class="add-row results-actions" style="margin-top:8px">
-      <button class="btn grape" id="copySummary" style="flex:1">📋 Kopieer overzicht</button>
-      <button class="btn mint" id="shareLink" style="flex:1">🔗 Deel via link</button>
+      <button class="btn grape" id="copySummary" style="flex:1" data-i18n="copySummary">📋 Kopieer overzicht</button>
+      <button class="btn mint" id="shareLink" style="flex:1" data-i18n="shareLinkMobile">🔗 Deel via link</button>
     </div>
-    <p class="note">💡 Splitsie verstuurt zelf niks en slaat niks op een server op. Het overzicht en de link deel je zelf via bijv. WhatsApp.</p>
+    <p class="note" data-i18n="note">💡 Splitsie verstuurt zelf niks en slaat niks op een server op. Het overzicht en de link deel je zelf via bijv. WhatsApp.</p>
   </section>
 
   <footer>
-    Gemaakt met 🧡 &middot; open source op <a href="#" id="ghlink">GitHub</a>
+    <span data-i18n="footer">Gemaakt met 🧡 &middot; open source op</span> <a href="#" id="ghlink">GitHub</a>
   </footer>
 </div>
 
@@ -415,9 +446,251 @@ let editingId=null; // id of expense being edited, or null
 let readOnly=false; // true wanneer via deel-link geopend
 let pid=0, eid=0;
 const STORAGE_KEY='splitsie-data-v1';
+const LANG_KEY='splitsie-lang';
+
+/* ---------- Vertalingen (i18n) ---------- */
+const LANGS=[
+  {code:'nl',flag:'🇳🇱',name:'Nederlands'},
+  {code:'en',flag:'🇬🇧',name:'English'},
+  {code:'fr',flag:'🇫🇷',name:'Français'},
+  {code:'de',flag:'🇩🇪',name:'Deutsch'},
+  {code:'es',flag:'🇪🇸',name:'Español'},
+  {code:'zh',flag:'🇨🇳',name:'中文'}
+];
+const LOCALES={nl:'nl-NL',en:'en-IE',fr:'fr-FR',de:'de-DE',es:'es-ES',zh:'zh-CN'};
+const I18N={
+  nl:{
+    tag:'Gooi de bonnetjes op tafel — wij rekenen uit <b>wie wat aan wie betaalt</b>.',
+    themeDark:'Donker',themeLight:'Licht',themeAria:'Wissel tussen licht en donker thema',langAria:'Kies een taal',
+    bannerTitle:'Je bekijkt een gedeelde afrekening.',
+    bannerText:'Wijzigingen worden niet bewaard. Wil je zelf verder rekenen? Maak dan een eigen kopie.',
+    makeCopy:'Eigen kopie maken',
+    peopleTitle:'Wie doen er mee?',peopleSub:'Voeg iedereen toe die kosten deelt.',
+    namePlaceholder:'Naam, bijv. Sanne',addPerson:'+ Toevoegen',clearAll:'🗑️ Alles wissen en opnieuw beginnen',
+    expNew:'Nieuwe uitgave',expEdit:'Uitgave bewerken',expSubForm:'Wat is er betaald, door wie, en voor wie?',
+    whatLabel:'Wat was het?',whatPlaceholder:'Boodschappen, taxi, pizza…',
+    amountLabel:'Bedrag (€)',payerLabel:'Betaald door',
+    splitQ:'Wie deelt in deze kosten?',splitAll:'🌍 Iedereen',splitSome:'✋ Bepaalde mensen',splitCustom:'⚖️ Eigen bedragen',
+    saveExpense:'Uitgave opslaan',saveEdit:'Wijzigingen opslaan',cancel:'Annuleren',
+    listTitle:'Alle uitgaven',listEmptySub:'Nog niets ingevoerd.',
+    resultsTitle:'De afrekening',resultsSub:'Zo min mogelijk overboekingen om iedereen gelijk te trekken.',
+    copySummary:'📋 Kopieer overzicht',shareLinkMobile:'🔗 Deel via link',shareLinkDesktop:'🔗 Kopieer link',
+    note:'💡 Splitsie verstuurt zelf niks en slaat niks op een server op. Het overzicht en de link deel je zelf via bijv. WhatsApp.',
+    footer:'Gemaakt met 🧡 · open source op',
+    emptyPeople:'Nog niemand toegevoegd — begin hieronder 👇',
+    fillAmountFirst:'Vul eerst het bedrag hierboven in',exact:'Klopt precies! 🎉',
+    remaining:'Nog {x} te verdelen',tooMuch:'{x} te veel verdeeld',
+    distributed:'Verdeeld: {sum} / {goal}',splitEven:'Gelijk verdelen',
+    expEmpty:'Nog geen uitgaven. Voeg er hierboven eentje toe 🧾',
+    expCountOne:'{n} uitgave · samen <b>{total}</b>',expCountMany:'{n} uitgaven · samen <b>{total}</b>',
+    edit:'Bewerken',remove:'Verwijderen',
+    paidBy:'Betaald door',sharedAll:'gedeeld door iedereen',customLabel:'eigen bedragen —',forWhom:'voor',
+    needMore:'Voeg mensen en uitgaven toe om de afrekening te zien.',
+    total:'Totaal',persons:'Personen',avgPP:'Gem. p.p.',
+    getsBack:'krijgt terug',owes:'moet nog betalen',even:'staat gelijk 🎉',allEven:'🎉 Iedereen staat gelijk!',
+    needExpense:'Voeg eerst een uitgave toe',
+    sumTitle:'💸 Splitsie — overzicht',sumTotal:'Totaal: {total} · {n} personen · {pp} p.p.',
+    sumExpenses:'Uitgaven:',sumWhoPays:'Wie betaalt wie:',sumEveryone:'iedereen',sumAllEven:'• Iedereen staat gelijk 🎉',
+    sumLine:'• {what} — {amt} (betaald door {payer}, voor {who})',sumTx:'• {from} → {to}: {amt}',
+    copied:'✅ Gekopieerd! Nu plakken & delen',linkCopied:'✅ Link gekopieerd!',shared:'✅ Gedeeld!',
+    confirmClear:'Weet je het zeker? Alle personen en uitgaven worden gewist.',
+    shareTitle:'Splitsie afrekening'
+  },
+  en:{
+    tag:'Drop the receipts on the table — we work out <b>who owes what to whom</b>.',
+    themeDark:'Dark',themeLight:'Light',themeAria:'Switch between light and dark theme',langAria:'Choose a language',
+    bannerTitle:'You\u2019re viewing a shared tally.',
+    bannerText:'Changes aren\u2019t saved. Want to keep working on it yourself? Make your own copy.',
+    makeCopy:'Make my own copy',
+    peopleTitle:'Who\u2019s taking part?',peopleSub:'Add everyone who shares the costs.',
+    namePlaceholder:'Name, e.g. Sam',addPerson:'+ Add',clearAll:'🗑️ Clear everything and start over',
+    expNew:'New expense',expEdit:'Edit expense',expSubForm:'What was paid, by whom, and for whom?',
+    whatLabel:'What was it?',whatPlaceholder:'Groceries, taxi, pizza…',
+    amountLabel:'Amount (€)',payerLabel:'Paid by',
+    splitQ:'Who shares this cost?',splitAll:'🌍 Everyone',splitSome:'✋ Certain people',splitCustom:'⚖️ Custom amounts',
+    saveExpense:'Save expense',saveEdit:'Save changes',cancel:'Cancel',
+    listTitle:'All expenses',listEmptySub:'Nothing added yet.',
+    resultsTitle:'The settlement',resultsSub:'The fewest transfers to make everyone even.',
+    copySummary:'📋 Copy summary',shareLinkMobile:'🔗 Share via link',shareLinkDesktop:'🔗 Copy link',
+    note:'💡 Splitsie sends nothing and stores nothing on a server. You share the summary and link yourself, e.g. via WhatsApp.',
+    footer:'Made with 🧡 · open source on',
+    emptyPeople:'No one added yet — start below 👇',
+    fillAmountFirst:'Enter the amount above first',exact:'Adds up exactly! 🎉',
+    remaining:'{x} still to divide',tooMuch:'{x} too much divided',
+    distributed:'Divided: {sum} / {goal}',splitEven:'Split evenly',
+    expEmpty:'No expenses yet. Add one above 🧾',
+    expCountOne:'{n} expense · {total} total',expCountMany:'{n} expenses · {total} total',
+    edit:'Edit',remove:'Delete',
+    paidBy:'Paid by',sharedAll:'shared by everyone',customLabel:'custom amounts —',forWhom:'for',
+    needMore:'Add people and expenses to see the settlement.',
+    total:'Total',persons:'People',avgPP:'Avg. pp',
+    getsBack:'gets back',owes:'still owes',even:'is even 🎉',allEven:'🎉 Everyone is even!',
+    needExpense:'Add an expense first',
+    sumTitle:'💸 Splitsie — summary',sumTotal:'Total: {total} · {n} people · {pp} pp',
+    sumExpenses:'Expenses:',sumWhoPays:'Who pays whom:',sumEveryone:'everyone',sumAllEven:'• Everyone is even 🎉',
+    sumLine:'• {what} — {amt} (paid by {payer}, for {who})',sumTx:'• {from} → {to}: {amt}',
+    copied:'✅ Copied! Now paste & share',linkCopied:'✅ Link copied!',shared:'✅ Shared!',
+    confirmClear:'Are you sure? All people and expenses will be deleted.',
+    shareTitle:'Splitsie tally'
+  },
+  fr:{
+    tag:'Posez les tickets sur la table — on calcule <b>qui doit quoi à qui</b>.',
+    themeDark:'Sombre',themeLight:'Clair',themeAria:'Basculer entre thème clair et sombre',langAria:'Choisir une langue',
+    bannerTitle:'Vous consultez un décompte partagé.',
+    bannerText:'Les modifications ne sont pas enregistrées. Vous voulez continuer vous-même ? Faites votre propre copie.',
+    makeCopy:'Faire ma propre copie',
+    peopleTitle:'Qui participe ?',peopleSub:'Ajoutez toutes les personnes qui partagent les frais.',
+    namePlaceholder:'Nom, p. ex. Léa',addPerson:'+ Ajouter',clearAll:'🗑️ Tout effacer et recommencer',
+    expNew:'Nouvelle dépense',expEdit:'Modifier la dépense',expSubForm:'Qu\u2019a-t-on payé, par qui, et pour qui ?',
+    whatLabel:'C\u2019était quoi ?',whatPlaceholder:'Courses, taxi, pizza…',
+    amountLabel:'Montant (€)',payerLabel:'Payé par',
+    splitQ:'Qui partage ce coût ?',splitAll:'🌍 Tout le monde',splitSome:'✋ Certaines personnes',splitCustom:'⚖️ Montants personnalisés',
+    saveExpense:'Enregistrer la dépense',saveEdit:'Enregistrer les modifications',cancel:'Annuler',
+    listTitle:'Toutes les dépenses',listEmptySub:'Rien pour l\u2019instant.',
+    resultsTitle:'Le décompte',resultsSub:'Le moins de virements possible pour équilibrer tout le monde.',
+    copySummary:'📋 Copier le récapitulatif',shareLinkMobile:'🔗 Partager le lien',shareLinkDesktop:'🔗 Copier le lien',
+    note:'💡 Splitsie n\u2019envoie rien et ne stocke rien sur un serveur. Vous partagez vous-même le récapitulatif et le lien, p. ex. via WhatsApp.',
+    footer:'Fait avec 🧡 · open source sur',
+    emptyPeople:'Personne pour l\u2019instant — commencez ci-dessous 👇',
+    fillAmountFirst:'Saisissez d\u2019abord le montant ci-dessus',exact:'Ça tombe juste ! 🎉',
+    remaining:'Encore {x} à répartir',tooMuch:'{x} de trop réparti',
+    distributed:'Réparti : {sum} / {goal}',splitEven:'Répartir également',
+    expEmpty:'Aucune dépense. Ajoutez-en une ci-dessus 🧾',
+    expCountOne:'{n} dépense · {total} au total',expCountMany:'{n} dépenses · {total} au total',
+    edit:'Modifier',remove:'Supprimer',
+    paidBy:'Payé par',sharedAll:'partagé par tout le monde',customLabel:'montants personnalisés —',forWhom:'pour',
+    needMore:'Ajoutez des personnes et des dépenses pour voir le décompte.',
+    total:'Total',persons:'Personnes',avgPP:'Moy. /pers.',
+    getsBack:'récupère',owes:'doit encore',even:'est à l\u2019équilibre 🎉',allEven:'🎉 Tout le monde est à l\u2019équilibre !',
+    needExpense:'Ajoutez d\u2019abord une dépense',
+    sumTitle:'💸 Splitsie — récapitulatif',sumTotal:'Total : {total} · {n} personnes · {pp} /pers.',
+    sumExpenses:'Dépenses :',sumWhoPays:'Qui paie qui :',sumEveryone:'tout le monde',sumAllEven:'• Tout le monde est à l\u2019équilibre 🎉',
+    sumLine:'• {what} — {amt} (payé par {payer}, pour {who})',sumTx:'• {from} → {to} : {amt}',
+    copied:'✅ Copié ! Collez et partagez',linkCopied:'✅ Lien copié !',shared:'✅ Partagé !',
+    confirmClear:'Êtes-vous sûr ? Toutes les personnes et dépenses seront supprimées.',
+    shareTitle:'Décompte Splitsie'
+  },
+  de:{
+    tag:'Legt die Belege auf den Tisch — wir rechnen aus, <b>wer wem was schuldet</b>.',
+    themeDark:'Dunkel',themeLight:'Hell',themeAria:'Zwischen hellem und dunklem Thema wechseln',langAria:'Sprache wählen',
+    bannerTitle:'Du siehst eine geteilte Abrechnung.',
+    bannerText:'Änderungen werden nicht gespeichert. Selbst weiterrechnen? Dann erstelle eine eigene Kopie.',
+    makeCopy:'Eigene Kopie erstellen',
+    peopleTitle:'Wer macht mit?',peopleSub:'Füge alle hinzu, die Kosten teilen.',
+    namePlaceholder:'Name, z. B. Sanne',addPerson:'+ Hinzufügen',clearAll:'🗑️ Alles löschen und neu beginnen',
+    expNew:'Neue Ausgabe',expEdit:'Ausgabe bearbeiten',expSubForm:'Was wurde bezahlt, von wem und für wen?',
+    whatLabel:'Was war es?',whatPlaceholder:'Einkäufe, Taxi, Pizza…',
+    amountLabel:'Betrag (€)',payerLabel:'Bezahlt von',
+    splitQ:'Wer teilt diese Kosten?',splitAll:'🌍 Alle',splitSome:'✋ Bestimmte Personen',splitCustom:'⚖️ Eigene Beträge',
+    saveExpense:'Ausgabe speichern',saveEdit:'Änderungen speichern',cancel:'Abbrechen',
+    listTitle:'Alle Ausgaben',listEmptySub:'Noch nichts eingetragen.',
+    resultsTitle:'Die Abrechnung',resultsSub:'So wenige Überweisungen wie möglich, um alle auszugleichen.',
+    copySummary:'📋 Übersicht kopieren',shareLinkMobile:'🔗 Per Link teilen',shareLinkDesktop:'🔗 Link kopieren',
+    note:'💡 Splitsie sendet nichts und speichert nichts auf einem Server. Übersicht und Link teilst du selbst, z. B. über WhatsApp.',
+    footer:'Gemacht mit 🧡 · Open Source auf',
+    emptyPeople:'Noch niemand hinzugefügt — starte unten 👇',
+    fillAmountFirst:'Gib zuerst oben den Betrag ein',exact:'Passt genau! 🎉',
+    remaining:'Noch {x} zu verteilen',tooMuch:'{x} zu viel verteilt',
+    distributed:'Verteilt: {sum} / {goal}',splitEven:'Gleich verteilen',
+    expEmpty:'Noch keine Ausgaben. Füge oben eine hinzu 🧾',
+    expCountOne:'{n} Ausgabe · zusammen {total}',expCountMany:'{n} Ausgaben · zusammen {total}',
+    edit:'Bearbeiten',remove:'Löschen',
+    paidBy:'Bezahlt von',sharedAll:'von allen geteilt',customLabel:'eigene Beträge —',forWhom:'für',
+    needMore:'Füge Personen und Ausgaben hinzu, um die Abrechnung zu sehen.',
+    total:'Gesamt',persons:'Personen',avgPP:'Ø pro Person',
+    getsBack:'bekommt zurück',owes:'schuldet noch',even:'ist ausgeglichen 🎉',allEven:'🎉 Alle sind ausgeglichen!',
+    needExpense:'Füge zuerst eine Ausgabe hinzu',
+    sumTitle:'💸 Splitsie — Übersicht',sumTotal:'Gesamt: {total} · {n} Personen · {pp} pro Person',
+    sumExpenses:'Ausgaben:',sumWhoPays:'Wer zahlt wem:',sumEveryone:'alle',sumAllEven:'• Alle sind ausgeglichen 🎉',
+    sumLine:'• {what} — {amt} (bezahlt von {payer}, für {who})',sumTx:'• {from} → {to}: {amt}',
+    copied:'✅ Kopiert! Jetzt einfügen & teilen',linkCopied:'✅ Link kopiert!',shared:'✅ Geteilt!',
+    confirmClear:'Bist du sicher? Alle Personen und Ausgaben werden gelöscht.',
+    shareTitle:'Splitsie-Abrechnung'
+  },
+  es:{
+    tag:'Pon los recibos sobre la mesa — calculamos <b>quién le debe qué a quién</b>.',
+    themeDark:'Oscuro',themeLight:'Claro',themeAria:'Cambiar entre tema claro y oscuro',langAria:'Elegir un idioma',
+    bannerTitle:'Estás viendo una cuenta compartida.',
+    bannerText:'Los cambios no se guardan. ¿Quieres seguir tú mismo? Haz tu propia copia.',
+    makeCopy:'Crear mi propia copia',
+    peopleTitle:'¿Quiénes participan?',peopleSub:'Añade a todos los que comparten los gastos.',
+    namePlaceholder:'Nombre, p. ej. Ana',addPerson:'+ Añadir',clearAll:'🗑️ Borrar todo y empezar de nuevo',
+    expNew:'Nuevo gasto',expEdit:'Editar gasto',expSubForm:'¿Qué se pagó, quién y para quién?',
+    whatLabel:'¿Qué fue?',whatPlaceholder:'Compra, taxi, pizza…',
+    amountLabel:'Importe (€)',payerLabel:'Pagado por',
+    splitQ:'¿Quién comparte este gasto?',splitAll:'🌍 Todos',splitSome:'✋ Ciertas personas',splitCustom:'⚖️ Importes propios',
+    saveExpense:'Guardar gasto',saveEdit:'Guardar cambios',cancel:'Cancelar',
+    listTitle:'Todos los gastos',listEmptySub:'Nada aún.',
+    resultsTitle:'La liquidación',resultsSub:'Las mínimas transferencias para igualar a todos.',
+    copySummary:'📋 Copiar resumen',shareLinkMobile:'🔗 Compartir enlace',shareLinkDesktop:'🔗 Copiar enlace',
+    note:'💡 Splitsie no envía ni guarda nada en un servidor. El resumen y el enlace los compartes tú, p. ej. por WhatsApp.',
+    footer:'Hecho con 🧡 · código abierto en',
+    emptyPeople:'Nadie añadido aún — empieza abajo 👇',
+    fillAmountFirst:'Introduce primero el importe de arriba',exact:'¡Cuadra exacto! 🎉',
+    remaining:'Aún {x} por repartir',tooMuch:'{x} repartido de más',
+    distributed:'Repartido: {sum} / {goal}',splitEven:'Repartir por igual',
+    expEmpty:'Aún no hay gastos. Añade uno arriba 🧾',
+    expCountOne:'{n} gasto · {total} en total',expCountMany:'{n} gastos · {total} en total',
+    edit:'Editar',remove:'Eliminar',
+    paidBy:'Pagado por',sharedAll:'compartido por todos',customLabel:'importes propios —',forWhom:'para',
+    needMore:'Añade personas y gastos para ver la liquidación.',
+    total:'Total',persons:'Personas',avgPP:'Media p.p.',
+    getsBack:'recupera',owes:'aún debe',even:'está en paz 🎉',allEven:'🎉 ¡Todos en paz!',
+    needExpense:'Añade primero un gasto',
+    sumTitle:'💸 Splitsie — resumen',sumTotal:'Total: {total} · {n} personas · {pp} p.p.',
+    sumExpenses:'Gastos:',sumWhoPays:'Quién paga a quién:',sumEveryone:'todos',sumAllEven:'• Todos en paz 🎉',
+    sumLine:'• {what} — {amt} (pagado por {payer}, para {who})',sumTx:'• {from} → {to}: {amt}',
+    copied:'✅ ¡Copiado! Ahora pega y comparte',linkCopied:'✅ ¡Enlace copiado!',shared:'✅ ¡Compartido!',
+    confirmClear:'¿Seguro? Se eliminarán todas las personas y gastos.',
+    shareTitle:'Cuenta de Splitsie'
+  },
+  zh:{
+    tag:'把账单放到桌上 —— 我们帮你算清<b>谁欠谁多少</b>。',
+    themeDark:'深色',themeLight:'浅色',themeAria:'切换浅色和深色主题',langAria:'选择语言',
+    bannerTitle:'你正在查看一份共享的账单。',
+    bannerText:'修改不会被保存。想自己继续算？请创建一份自己的副本。',
+    makeCopy:'创建我的副本',
+    peopleTitle:'谁一起分摊？',peopleSub:'把所有分摊费用的人都加进来。',
+    namePlaceholder:'姓名，例如 小明',addPerson:'+ 添加',clearAll:'🗑️ 清空并重新开始',
+    expNew:'新支出',expEdit:'编辑支出',expSubForm:'花了什么、谁付的、给谁？',
+    whatLabel:'这是什么？',whatPlaceholder:'买菜、打车、披萨…',
+    amountLabel:'金额（€）',payerLabel:'付款人',
+    splitQ:'谁分摊这笔费用？',splitAll:'🌍 所有人',splitSome:'✋ 指定的人',splitCustom:'⚖️ 自定义金额',
+    saveExpense:'保存支出',saveEdit:'保存修改',cancel:'取消',
+    listTitle:'所有支出',listEmptySub:'还没有记录。',
+    resultsTitle:'结算',resultsSub:'用最少的转账让大家扯平。',
+    copySummary:'📋 复制概览',shareLinkMobile:'🔗 通过链接分享',shareLinkDesktop:'🔗 复制链接',
+    note:'💡 Splitsie 不会发送或在服务器上保存任何内容。概览和链接由你自己分享，例如通过 WhatsApp。',
+    footer:'用 🧡 制作 · 开源于',
+    emptyPeople:'还没有人 —— 从下面开始 👇',
+    fillAmountFirst:'请先在上面填写金额',exact:'刚好凑齐！🎉',
+    remaining:'还需分配 {x}',tooMuch:'多分配了 {x}',
+    distributed:'已分配：{sum} / {goal}',splitEven:'平均分配',
+    expEmpty:'还没有支出。在上面添加一笔吧 🧾',
+    expCountOne:'{n} 笔支出 · 共 {total}',expCountMany:'{n} 笔支出 · 共 {total}',
+    edit:'编辑',remove:'删除',
+    paidBy:'付款人',sharedAll:'所有人分摊',customLabel:'自定义金额 —',forWhom:'给',
+    needMore:'添加人员和支出即可查看结算。',
+    total:'总计',persons:'人数',avgPP:'人均',
+    getsBack:'应收回',owes:'还需支付',even:'已扯平 🎉',allEven:'🎉 大家都扯平了！',
+    needExpense:'请先添加一笔支出',
+    sumTitle:'💸 Splitsie —— 概览',sumTotal:'总计：{total} · {n} 人 · 人均 {pp}',
+    sumExpenses:'支出：',sumWhoPays:'谁付给谁：',sumEveryone:'所有人',sumAllEven:'• 大家都扯平了 🎉',
+    sumLine:'• {what} —— {amt}（{payer} 付款，给 {who}）',sumTx:'• {from} → {to}：{amt}',
+    copied:'✅ 已复制！现在粘贴并分享',linkCopied:'✅ 链接已复制！',shared:'✅ 已分享！',
+    confirmClear:'确定吗？所有人员和支出都将被删除。',
+    shareTitle:'Splitsie 账单'
+  }
+};
+let lang='nl';
+function t(key,vars){
+  let s=(I18N[lang]&&I18N[lang][key])!=null?I18N[lang][key]:(I18N.nl[key]||key);
+  if(vars)Object.keys(vars).forEach(k=>{s=s.split('{'+k+'}').join(vars[k]);});
+  return s;
+}
 
 const $=s=>document.querySelector(s);
-const euro=n=>'€'+n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});
+const euro=n=>'€'+n.toLocaleString(LOCALES[lang]||'nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});
 const initials=n=>n.trim().slice(0,2).toUpperCase()||'?';
 // Wie deelt er feitelijk in een uitgave? Bij "iedereen" groeit dit automatisch mee met nieuwe personen.
 function sharersOf(e){
@@ -451,10 +724,10 @@ function removePerson(id){
 function renderPeople(){
   const box=$('#peopleList');
   box.innerHTML='';
-  if(!people.length){box.innerHTML='<div class="empty" style="width:100%">Nog niemand toegevoegd — begin hieronder 👇</div>';return;}
+  if(!people.length){box.innerHTML='<div class="empty" style="width:100%">'+t('emptyPeople')+'</div>';return;}
   people.forEach(p=>{
     const c=document.createElement('div');c.className='chip';
-    c.innerHTML=`<span class="av" style="background:${p.color}">${initials(p.name)}</span>${escapeHtml(p.name)}<button title="Verwijderen">✕</button>`;
+    c.innerHTML=`<span class="av" style="background:${p.color}">${initials(p.name)}</span>${escapeHtml(p.name)}<button title="${t('remove')}">✕</button>`;
     c.querySelector('button').onclick=()=>removePerson(p.id);
     box.appendChild(c);
   });
@@ -498,7 +771,7 @@ function renderCustomSplit(){
       <input type="number" class="csamt" data-pid="${p.id}" min="0" step="0.01" placeholder="0,00" value="${v}">
     </div>`;
   }).join('')+`<div class="cstally" id="csTally"></div>
-    <div style="text-align:right"><button type="button" class="btn mint mini" id="csSplitEven" style="margin-top:2px">Gelijk verdelen</button></div>`;
+    <div style="text-align:right"><button type="button" class="btn mint mini" id="csSplitEven" style="margin-top:2px">${t('splitEven')}</button></div>`;
   box.querySelectorAll('.csamt').forEach(inp=>inp.addEventListener('input',updateCustomTally));
   const even=box.querySelector('#csSplitEven');
   if(even)even.onclick=splitEvenIntoCustom;
@@ -516,11 +789,11 @@ function updateCustomTally(){
   const ok=Math.abs(diff)<0.005&&goal>0;
   tally.className='cstally '+(ok?'ok':'off');
   let msg;
-  if(!goal)msg='Vul eerst het bedrag hierboven in';
-  else if(ok)msg='Klopt precies! 🎉';
-  else if(diff>0)msg=`Nog ${euro(diff)} te verdelen`;
-  else msg=`${euro(-diff)} te veel verdeeld`;
-  tally.innerHTML=`<span>Verdeeld: ${euro(sum)} / ${euro(goal)}</span><span class="diff ${ok?'ok':'off'}">${msg}</span>`;
+  if(!goal)msg=t('fillAmountFirst');
+  else if(ok)msg=t('exact');
+  else if(diff>0)msg=t('remaining',{x:euro(diff)});
+  else msg=t('tooMuch',{x:euro(-diff)});
+  tally.innerHTML=`<span>${t('distributed',{sum:euro(sum),goal:euro(goal)})}</span><span class="diff ${ok?'ok':'off'}">${msg}</span>`;
 }
 function splitEvenIntoCustom(){
   const goal=parseFloat($('#expAmt').value)||0;
@@ -588,16 +861,16 @@ function startEdit(id){
   setMode(e.split);
   renderShareChecks();
   renderCustomSplit();
-  $('#expFormTitle').textContent='Uitgave bewerken';
-  $('#addExpense').textContent='Wijzigingen opslaan';
+  $('#expFormTitle').textContent=t('expEdit');
+  $('#addExpense').textContent=t('saveEdit');
   $('#cancelEdit').style.display='';
   $('#expenseCard').scrollIntoView({behavior:'smooth',block:'start'});
   $('#expWhat').focus();
 }
 function stopEdit(){
   editingId=null;
-  $('#expFormTitle').textContent='Nieuwe uitgave';
-  $('#addExpense').textContent='Uitgave opslaan';
+  $('#expFormTitle').textContent=t('expNew');
+  $('#addExpense').textContent=t('saveExpense');
   $('#cancelEdit').style.display='none';
 }
 function cancelEdit(){
@@ -610,9 +883,9 @@ function flash(sel){const el=$(sel);el.style.boxShadow='3px 3px 0 var(--coral)';
 function renderExpenses(){
   const box=$('#expenseList');const sub=$('#expSub');
   box.innerHTML='';
-  if(!expenses.length){box.innerHTML='<div class="empty">Nog geen uitgaven. Voeg er hierboven eentje toe 🧾</div>';sub.textContent='Nog niets ingevoerd.';return;}
+  if(!expenses.length){box.innerHTML='<div class="empty">'+t('expEmpty')+'</div>';sub.textContent=t('listEmptySub');return;}
   const total=expenses.reduce((s,e)=>s+e.amount,0);
-  sub.innerHTML=`${expenses.length} ${expenses.length===1?'uitgave':'uitgaven'} · samen <b>${euro(total)}</b>`;
+  sub.innerHTML=t(expenses.length===1?'expCountOne':'expCountMany',{n:expenses.length,total:euro(total)});
   expenses.forEach(e=>{
     const payer=people.find(p=>p.id===e.payerId);
     const shareIds=sharersOf(e);
@@ -622,22 +895,22 @@ function renderExpenses(){
     if(editing)d.style.outline='3px dashed var(--grape)';
     d.style.setProperty('--paycol',payer?payer.color:'var(--mint)');
     let split;
-    if(e.split==='all')split='gedeeld door iedereen';
+    if(e.split==='all')split=t('sharedAll');
     else if(e.split==='custom'){
       const parts=Object.entries(e.custom||{}).map(([id,v])=>{
         const nm=people.find(p=>p.id===Number(id))?.name;return nm?nm+' '+euro(v):null;
       }).filter(Boolean).join(', ');
-      split='eigen bedragen — <span class="who">'+escapeHtml(parts)+'</span>';
-    }else split='voor <span class="who">'+escapeHtml(names)+'</span>';
+      split=t('customLabel')+' <span class="who">'+escapeHtml(parts)+'</span>';
+    }else split=t('forWhom')+' <span class="who">'+escapeHtml(names)+'</span>';
     const controls=readOnly?'':`
-        <button class="del edit" title="Bewerken">✏️</button>
-        <button class="del rm" title="Verwijderen">🗑️</button>`;
+        <button class="del edit" title="${t('edit')}">✏️</button>
+        <button class="del rm" title="${t('remove')}">🗑️</button>`;
     d.innerHTML=`
       <div class="exp-top">
         <span class="exp-what">${escapeHtml(e.what)}</span>
         <span class="exp-amt">${euro(e.amount)}</span>${controls}
       </div>
-      <div class="exp-meta">Betaald door <span class="who">${payer?escapeHtml(payer.name):'?'}</span> · ${split}</div>`;
+      <div class="exp-meta">${t('paidBy')} <span class="who">${payer?escapeHtml(payer.name):'?'}</span> · ${split}</div>`;
     if(!readOnly){
       d.querySelector('.edit').onclick=()=>startEdit(e.id);
       d.querySelector('.rm').onclick=()=>{
@@ -689,31 +962,31 @@ function renderResults(){
   const totalsBox=$('#totals'),balBox=$('#balances'),setBox=$('#settlements');
   if(people.length<1||!expenses.length){
     totalsBox.innerHTML='';balBox.innerHTML='';
-    setBox.innerHTML='<div class="empty">Voeg mensen en uitgaven toe om de afrekening te zien.</div>';
+    setBox.innerHTML='<div class="empty">'+t('needMore')+'</div>';
     return;
   }
   const total=expenses.reduce((s,e)=>s+e.amount,0);
   const perHead=total/people.length;
   totalsBox.innerHTML=`
-    <div class="stat"><div class="n">${euro(total)}</div><div class="l">Totaal</div></div>
-    <div class="stat"><div class="n">${people.length}</div><div class="l">Personen</div></div>
-    <div class="stat"><div class="n">${euro(perHead)}</div><div class="l">Gem. p.p.</div></div>`;
+    <div class="stat"><div class="n">${euro(total)}</div><div class="l">${t('total')}</div></div>
+    <div class="stat"><div class="n">${people.length}</div><div class="l">${t('persons')}</div></div>
+    <div class="stat"><div class="n">${euro(perHead)}</div><div class="l">${t('avgPP')}</div></div>`;
 
   const bal=computeBalances();
   balBox.innerHTML=people.map(p=>{
     const v=bal[p.id];const cls=v>0.005?'pos':v<-0.005?'neg':'';
     const av=`<span class="av" style="background:${p.color};width:26px;height:26px;display:grid;place-items:center;border-radius:50%;color:#fff;font-family:Fredoka;font-size:13px">${initials(p.name)}</span>`;
-    const txt=v>0.005?'krijgt terug':v<-0.005?'moet nog betalen':'staat gelijk 🎉';
+    const txt=v>0.005?t('getsBack'):v<-0.005?t('owes'):t('even');
     return `<div class="bal">${av}<span class="nm">${escapeHtml(p.name)}</span><span style="color:var(--muted);font-weight:700;font-size:14px">${txt}</span><span class="amt ${cls}">${euro(Math.abs(v))}</span></div>`;
   }).join('');
 
   const tx=minimizeTransfers(bal);
-  if(!tx.length){setBox.innerHTML='<div class="allset">🎉 Iedereen staat gelijk!</div>';return;}
-  setBox.innerHTML=tx.map(t=>{
-    const from=people.find(p=>p.id===t.from),to=people.find(p=>p.id===t.to);
+  if(!tx.length){setBox.innerHTML='<div class="allset">'+t('allEven')+'</div>';return;}
+  setBox.innerHTML=tx.map(transfer=>{
+    const from=people.find(p=>p.id===transfer.from),to=people.find(p=>p.id===transfer.to);
     return `<div class="settle">
       <span class="txt"><b>${escapeHtml(from.name)}</b> <span class="arrow">→</span> <b>${escapeHtml(to.name)}</b></span>
-      <span class="amount">${euro(t.amt)}</span>
+      <span class="amount">${euro(transfer.amt)}</span>
     </div>`;
   }).join('');
 }
@@ -725,27 +998,27 @@ function buildSummary(){
   const bal=computeBalances();
   const tx=minimizeTransfers(bal);
   const L=[];
-  L.push('💸 Splitsie — overzicht');
+  L.push(t('sumTitle'));
   L.push('');
-  L.push(`Totaal: ${euro(total)} · ${people.length} personen · ${euro(perHead)} p.p.`);
+  L.push(t('sumTotal',{total:euro(total),n:people.length,pp:euro(perHead)}));
   L.push('');
-  L.push('Uitgaven:');
+  L.push(t('sumExpenses'));
   expenses.forEach(e=>{
     const payer=people.find(p=>p.id===e.payerId);
     let who;
-    if(e.split==='all')who='iedereen';
+    if(e.split==='all')who=t('sumEveryone');
     else if(e.split==='custom')who=Object.entries(e.custom||{}).map(([id,v])=>{
       const nm=people.find(p=>p.id===Number(id))?.name;return nm?nm+' '+euro(v):null;
     }).filter(Boolean).join(', ');
     else who=sharersOf(e).map(id=>people.find(p=>p.id===id)?.name).filter(Boolean).join(', ');
-    L.push(`• ${e.what} — ${euro(e.amount)} (betaald door ${payer?payer.name:'?'}, voor ${who})`);
+    L.push(t('sumLine',{what:e.what,amt:euro(e.amount),payer:payer?payer.name:'?',who}));
   });
   L.push('');
-  L.push('Wie betaalt wie:');
-  if(!tx.length){L.push('• Iedereen staat gelijk 🎉');}
-  else tx.forEach(t=>{
-    const from=people.find(p=>p.id===t.from),to=people.find(p=>p.id===t.to);
-    L.push(`• ${from.name} → ${to.name}: ${euro(t.amt)}`);
+  L.push(t('sumWhoPays'));
+  if(!tx.length){L.push(t('sumAllEven'));}
+  else tx.forEach(transfer=>{
+    const from=people.find(p=>p.id===transfer.from),to=people.find(p=>p.id===transfer.to);
+    L.push(t('sumTx',{from:from.name,to:to.name,amt:euro(transfer.amt)}));
   });
   return L.join('\n');
 }
@@ -754,7 +1027,7 @@ function copySummary(){
   const text=buildSummary();
   const done=()=>{
     const b=$('#copySummary');const orig=b.textContent;
-    b.textContent='✅ Gekopieerd! Nu plakken & delen';
+    b.textContent=t('copied');
     setTimeout(()=>b.textContent=orig,2200);
   };
   if(navigator.clipboard&&navigator.clipboard.writeText){
@@ -781,7 +1054,7 @@ function updateFormState(){
   const canShare=people.length>=1&&expenses.length>=1;
   ['#copySummary','#shareLink'].forEach(sel=>{
     const b=$(sel);b.disabled=!canShare;
-    b.title=canShare?'':'Voeg eerst een uitgave toe';
+    b.title=canShare?'':t('needExpense');
   });
 }
 
@@ -867,11 +1140,11 @@ function shareViaLink(){
     b.textContent=txt;
     setTimeout(()=>b.textContent=orig,2200);
   };
-  const copied=()=>flashLabel('✅ Link gekopieerd!');
+  const copied=()=>flashLabel(t('linkCopied'));
   if(isTouchDevice&&navigator.share){
     // Mobiel: open het deelmenu; valt terug op kopiëren als de gebruiker annuleert of het faalt.
-    navigator.share({title:'Splitsie afrekening',url})
-      .then(()=>flashLabel('✅ Gedeeld!'))
+    navigator.share({title:t('shareTitle'),url})
+      .then(()=>flashLabel(t('shared')))
       .catch(()=>copyText(url,copied));
   }else{
     copyText(url,copied);
@@ -912,7 +1185,7 @@ function makeEditableCopy(){
 /* ---------- Alles wissen ---------- */
 function clearAll(){
   if(!people.length&&!expenses.length)return;
-  if(!confirm('Weet je het zeker? Alle personen en uitgaven worden gewist.'))return;
+  if(!confirm(t('confirmClear')))return;
   people=[];expenses=[];pid=0;eid=0;editingId=null;
   try{localStorage.removeItem(STORAGE_KEY);}catch(e){}
   cancelEdit();renderAll();
@@ -938,10 +1211,68 @@ $('#themeToggle').onclick=()=>{
 };
 initTheme();
 
+/* ---------- Taal (i18n) ---------- */
+function applyStaticI18n(){
+  document.documentElement.lang=lang;
+  // Elementen met tekstvertaling
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  // Elementen met HTML-vertaling (bevatten opmaak zoals <b>)
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
+  // Placeholders
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
+  // Aria-labels
+  $('#themeToggle').setAttribute('aria-label',t('themeAria'));
+  $('#langToggle').setAttribute('aria-label',t('langAria'));
+  // Deelknop-label hangt af van apparaat + taal
+  $('#shareLink').textContent=isTouchDevice?t('shareLinkMobile'):t('shareLinkDesktop');
+  // Formulier-titel volgt bewerk-status
+  $('#expFormTitle').textContent=t(editingId?'expEdit':'expNew');
+  $('#addExpense').textContent=t(editingId?'saveEdit':'saveExpense');
+  // Vlag in de taalknop
+  const cur=LANGS.find(l=>l.code===lang);
+  $('#langFlag').textContent=cur?cur.flag:'🌐';
+}
+function buildLangMenu(){
+  const menu=$('#langMenu');
+  menu.innerHTML=LANGS.map(l=>
+    `<button class="lang-opt${l.code===lang?' active':''}" role="menuitem" data-lang="${l.code}"><span class="lf">${l.flag}</span>${l.name}</button>`
+  ).join('');
+  menu.querySelectorAll('.lang-opt').forEach(b=>{
+    b.onclick=()=>{setLang(b.dataset.lang);closeLangMenu();};
+  });
+}
+function setLang(code){
+  if(!I18N[code])code='nl';
+  lang=code;
+  try{localStorage.setItem(LANG_KEY,code);}catch(e){}
+  buildLangMenu();
+  applyStaticI18n();
+  renderAll(); // dynamische teksten opnieuw opbouwen in de nieuwe taal
+}
+function openLangMenu(){$('#langMenu').classList.add('open');$('#langToggle').setAttribute('aria-expanded','true');}
+function closeLangMenu(){$('#langMenu').classList.remove('open');$('#langToggle').setAttribute('aria-expanded','false');}
+$('#langToggle').onclick=e=>{
+  e.stopPropagation();
+  $('#langMenu').classList.contains('open')?closeLangMenu():openLangMenu();
+};
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.lang-wrap'))closeLangMenu();
+});
+function initLang(){
+  let saved=null;
+  try{saved=localStorage.getItem(LANG_KEY);}catch(e){}
+  if(!saved){
+    const nav=(navigator.language||'nl').slice(0,2).toLowerCase();
+    saved=I18N[nav]?nav:'nl';
+  }
+  lang=I18N[saved]?saved:'nl';
+  buildLangMenu();
+}
+
 /* ---------- Opstart ---------- */
 (function init(){
-  // Label van de deelknop passend maken: mobiel deelt, desktop kopieert.
-  $('#shareLink').textContent=isTouchDevice?'🔗 Deel via link':'🔗 Kopieer link';
+  initLang();
+  applyStaticI18n();
   const m=location.hash.match(/^#s=(.+)$/);
   if(m){
     try{

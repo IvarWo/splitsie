@@ -15,6 +15,7 @@ Geen server, geen account, geen tracking. Alles draait lokaal in de browser.
 - **Delen via link:** de knop "Deel via link" maakt een link met je hele afrekening erin (zonder server). Wie die opent ziet een alleen-lezen weergave en kan er met één klik een eigen bewerkbare kopie van maken.
 - **Overzicht kopiëren:** één klik zet een beknopt overzicht (totaal, uitgaven en wie-betaalt-wie) op je klembord, klaar om te plakken en te delen via bijv. WhatsApp.
 - **Licht & donker thema:** knop rechtsboven wisselt tussen light en dark mode. Splitsie volgt standaard je systeemvoorkeur en onthoudt je keuze.
+- **Meertalig:** kies rechtsboven je taal — Nederlands, Engels, Frans, Duits, Spaans of Chinees. Splitsie start standaard in de taal van je browser en onthoudt je keuze. Iedereen ziet de app in zijn eigen taal, ook bij een gedeelde link.
 
 ## 🚀 Publiceren op GitHub Pages
 
