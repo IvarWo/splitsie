@@ -833,19 +833,26 @@ function parseShareData(b64){
   }));
   return{people,expenses};
 }
+// Is dit een aanraakapparaat (telefoon/tablet)? Dan is het systeem-deelmenu handig.
+// Op desktop kopiëren we liever direct naar het klembord.
+const isTouchDevice=window.matchMedia&&window.matchMedia('(pointer: coarse)').matches;
 function shareViaLink(){
   if(!people.length||!expenses.length){flash('#shareLink');return;}
   const url=buildShareUrl();
-  const done=()=>{
+  const flashLabel=txt=>{
     const b=$('#shareLink');const orig=b.textContent;
-    b.textContent='✅ Link gekopieerd!';
+    b.textContent=txt;
     setTimeout(()=>b.textContent=orig,2200);
   };
-  if(navigator.share){
-    navigator.share({title:'Splitsie afrekening',url}).then(done).catch(()=>{
-      copyText(url,done);
-    });
-  }else copyText(url,done);
+  const copied=()=>flashLabel('✅ Link gekopieerd!');
+  if(isTouchDevice&&navigator.share){
+    // Mobiel: open het deelmenu; valt terug op kopiëren als de gebruiker annuleert of het faalt.
+    navigator.share({title:'Splitsie afrekening',url})
+      .then(()=>flashLabel('✅ Gedeeld!'))
+      .catch(()=>copyText(url,copied));
+  }else{
+    copyText(url,copied);
+  }
 }
 function copyText(text,done){
   if(navigator.clipboard&&navigator.clipboard.writeText){
@@ -910,6 +917,8 @@ initTheme();
 
 /* ---------- Opstart ---------- */
 (function init(){
+  // Label van de deelknop passend maken: mobiel deelt, desktop kopieert.
+  $('#shareLink').textContent=isTouchDevice?'🔗 Deel via link':'🔗 Kopieer link';
   const m=location.hash.match(/^#s=(.+)$/);
   if(m){
     try{
