@@ -8,9 +8,10 @@ Geen server, geen account, geen tracking. Alles draait lokaal in de browser.
 
 - **Personen toevoegen** met eigen naam en gekleurde avatar.
 - **Uitgaven invoeren** per persoon: wat, hoeveel, en door wie betaald.
-- **Slim delen:** kies per uitgave of *iedereen* meedeelt, of alleen *bepaalde mensen* (jij vinkt aan wie).
+- **Slim delen:** kies per uitgave of *iedereen* meedeelt, of alleen *bepaalde mensen* (jij vinkt aan wie). Voeg je later een nieuw persoon toe, dan gaat die automatisch meedelen in alle "iedereen"-uitgaven.
+- **Uitgaven bewerken:** klik op ✏️ bij een uitgave om bedrag, betaler of verdeling achteraf aan te passen.
 - **Automatische afrekening:** balans per persoon + de minimale set overboekingen om iedereen gelijk te trekken.
-- **Betaalverzoeken sturen** (optioneel): open Tikkie, stuur een e-mail, of kopieer een kant-en-klaar bericht voor WhatsApp/je bankapp. Op mobiel gebruikt het het native deelmenu.
+- **Overzicht kopiëren:** één klik zet een beknopt overzicht (totaal, uitgaven en wie-betaalt-wie) op je klembord, klaar om te plakken en te delen via bijv. WhatsApp.
 
 ## 🚀 Publiceren op GitHub Pages
 
@@ -31,7 +32,7 @@ Elke uitgave wordt verdeeld over de mensen die eraan meedoen. De betaler krijgt 
 
 ## 🔒 Privacy
 
-Splitsie verstuurt zelf niets en slaat niets op. Betaalverzoeken openen jouw eigen apps; de bedragen vul je daar zelf definitief in.
+Splitsie verstuurt zelf niets en slaat niets op. Het "Kopieer overzicht"-knopje zet alleen tekst op je klembord; delen doe je zelf via de app van jouw keuze.
 
 ## 📄 Licentie
 
