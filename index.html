@@ -429,7 +429,7 @@
   </section>
 
   <footer>
-    <span data-i18n="footer">Gemaakt met 🧡 &middot; open source op</span> <a href="#" id="ghlink">GitHub</a>
+    <span data-i18n="footer">Gemaakt met 🧡</span>
   </footer>
 </div>
 
@@ -476,7 +476,7 @@ const I18N={
     resultsTitle:'De afrekening',resultsSub:'Zo min mogelijk overboekingen om iedereen gelijk te trekken.',
     copySummary:'📋 Kopieer overzicht',shareLinkMobile:'🔗 Deel via link',shareLinkDesktop:'🔗 Kopieer link',
     note:'💡 Splitsie verstuurt zelf niks en slaat niks op een server op. Het overzicht en de link deel je zelf via bijv. WhatsApp.',
-    footer:'Gemaakt met 🧡 · open source op',
+    footer:'Gemaakt met 🧡',
     emptyPeople:'Nog niemand toegevoegd — begin hieronder 👇',
     fillAmountFirst:'Vul eerst het bedrag hierboven in',exact:'Klopt precies! 🎉',
     remaining:'Nog {x} te verdelen',tooMuch:'{x} te veel verdeeld',
@@ -513,7 +513,7 @@ const I18N={
     resultsTitle:'The settlement',resultsSub:'The fewest transfers to make everyone even.',
     copySummary:'📋 Copy summary',shareLinkMobile:'🔗 Share via link',shareLinkDesktop:'🔗 Copy link',
     note:'💡 Splitsie sends nothing and stores nothing on a server. You share the summary and link yourself, e.g. via WhatsApp.',
-    footer:'Made with 🧡 · open source on',
+    footer:'Made with 🧡',
     emptyPeople:'No one added yet — start below 👇',
     fillAmountFirst:'Enter the amount above first',exact:'Adds up exactly! 🎉',
     remaining:'{x} still to divide',tooMuch:'{x} too much divided',
@@ -550,7 +550,7 @@ const I18N={
     resultsTitle:'Le décompte',resultsSub:'Le moins de virements possible pour équilibrer tout le monde.',
     copySummary:'📋 Copier le récapitulatif',shareLinkMobile:'🔗 Partager le lien',shareLinkDesktop:'🔗 Copier le lien',
     note:'💡 Splitsie n\u2019envoie rien et ne stocke rien sur un serveur. Vous partagez vous-même le récapitulatif et le lien, p. ex. via WhatsApp.',
-    footer:'Fait avec 🧡 · open source sur',
+    footer:'Fait avec 🧡',
     emptyPeople:'Personne pour l\u2019instant — commencez ci-dessous 👇',
     fillAmountFirst:'Saisissez d\u2019abord le montant ci-dessus',exact:'Ça tombe juste ! 🎉',
     remaining:'Encore {x} à répartir',tooMuch:'{x} de trop réparti',
@@ -587,7 +587,7 @@ const I18N={
     resultsTitle:'Die Abrechnung',resultsSub:'So wenige Überweisungen wie möglich, um alle auszugleichen.',
     copySummary:'📋 Übersicht kopieren',shareLinkMobile:'🔗 Per Link teilen',shareLinkDesktop:'🔗 Link kopieren',
     note:'💡 Splitsie sendet nichts und speichert nichts auf einem Server. Übersicht und Link teilst du selbst, z. B. über WhatsApp.',
-    footer:'Gemacht mit 🧡 · Open Source auf',
+    footer:'Gemacht mit 🧡',
     emptyPeople:'Noch niemand hinzugefügt — starte unten 👇',
     fillAmountFirst:'Gib zuerst oben den Betrag ein',exact:'Passt genau! 🎉',
     remaining:'Noch {x} zu verteilen',tooMuch:'{x} zu viel verteilt',
@@ -624,7 +624,7 @@ const I18N={
     resultsTitle:'La liquidación',resultsSub:'Las mínimas transferencias para igualar a todos.',
     copySummary:'📋 Copiar resumen',shareLinkMobile:'🔗 Compartir enlace',shareLinkDesktop:'🔗 Copiar enlace',
     note:'💡 Splitsie no envía ni guarda nada en un servidor. El resumen y el enlace los compartes tú, p. ej. por WhatsApp.',
-    footer:'Hecho con 🧡 · código abierto en',
+    footer:'Hecho con 🧡',
     emptyPeople:'Nadie añadido aún — empieza abajo 👇',
     fillAmountFirst:'Introduce primero el importe de arriba',exact:'¡Cuadra exacto! 🎉',
     remaining:'Aún {x} por repartir',tooMuch:'{x} repartido de más',
@@ -661,7 +661,7 @@ const I18N={
     resultsTitle:'结算',resultsSub:'用最少的转账让大家扯平。',
     copySummary:'📋 复制概览',shareLinkMobile:'🔗 通过链接分享',shareLinkDesktop:'🔗 复制链接',
     note:'💡 Splitsie 不会发送或在服务器上保存任何内容。概览和链接由你自己分享，例如通过 WhatsApp。',
-    footer:'用 🧡 制作 · 开源于',
+    footer:'用 🧡 制作',
     emptyPeople:'还没有人 —— 从下面开始 👇',
     fillAmountFirst:'请先在上面填写金额',exact:'刚好凑齐！🎉',
     remaining:'还需分配 {x}',tooMuch:'多分配了 {x}',
@@ -1072,7 +1072,6 @@ $('#makeCopy').onclick=makeEditableCopy;
 $('#tgAll').onclick=()=>setMode('all');
 $('#tgSome').onclick=()=>setMode('some');
 $('#tgCustom').onclick=()=>setMode('custom');
-$('#ghlink').onclick=e=>{e.preventDefault();alert('Vervang deze link in index.html door de URL van je eigen GitHub-repo 🙂');};
 
 /* ---------- Persistentie (localStorage) ---------- */
 function save(){
