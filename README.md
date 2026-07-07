@@ -12,6 +12,7 @@ Geen server, geen account, geen tracking. Alles draait lokaal in de browser.
 - **Uitgaven bewerken:** klik op ✏️ bij een uitgave om bedrag, betaler of verdeling achteraf aan te passen.
 - **Automatische afrekening:** balans per persoon + de minimale set overboekingen om iedereen gelijk te trekken.
 - **Overzicht kopiëren:** één klik zet een beknopt overzicht (totaal, uitgaven en wie-betaalt-wie) op je klembord, klaar om te plakken en te delen via bijv. WhatsApp.
+- **Licht & donker thema:** knop rechtsboven wisselt tussen light en dark mode. Splitsie volgt standaard je systeemvoorkeur en onthoudt je keuze.
 
 ## 🚀 Publiceren op GitHub Pages
 
