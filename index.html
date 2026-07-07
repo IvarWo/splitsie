@@ -219,7 +219,7 @@
 
   <!-- STEP 2: ADD EXPENSE -->
   <section class="card" id="expenseCard">
-    <h2><span class="badge b-lemon">🧾</span> Nieuwe uitgave</h2>
+    <h2><span class="badge b-lemon">🧾</span> <span id="expFormTitle">Nieuwe uitgave</span></h2>
     <p class="sub">Wat is er betaald, door wie, en voor wie?</p>
 
     <div class="field">
@@ -247,7 +247,10 @@
       <div class="checks hidden" id="shareChecks"></div>
     </div>
 
-    <button class="btn coral" id="addExpense" style="width:100%">Uitgave opslaan</button>
+    <div class="add-row">
+      <button class="btn coral" id="addExpense" style="flex:1">Uitgave opslaan</button>
+      <button class="btn" id="cancelEdit" style="display:none">Annuleren</button>
+    </div>
   </section>
 
   <!-- LIST -->
@@ -264,7 +267,8 @@
     <div class="totals" id="totals"></div>
     <div class="balances" id="balances"></div>
     <div id="settlements"></div>
-    <p class="note">💡 Betaalverzoeken openen je eigen bank-/betaalapp. Splitsie verstuurt zelf niks en slaat niks op.</p>
+    <button class="btn grape" id="copySummary" style="width:100%;margin-top:8px">📋 Kopieer overzicht om te delen</button>
+    <p class="note">💡 Splitsie verstuurt zelf niks en slaat niks op. Het gekopieerde overzicht deel je zelf via bijv. WhatsApp.</p>
   </section>
 
   <footer>
@@ -275,13 +279,16 @@
 <script>
 const AVATAR_COLORS=['#8367c7','#ff8a76','#5bbaa8','#78c0e0','#f6a5c0','#ffd166','#8bd3c7','#6b4fb0'];
 let people=[];      // {id,name,color}
-let expenses=[];    // {id,what,amount,payerId,shareIds[]}
+let expenses=[];    // {id,what,amount,payerId,sharedAll:bool,shareIds:[]}  (shareIds only used when sharedAll=false)
 let splitMode='all';
+let editingId=null; // id of expense being edited, or null
 let pid=0, eid=0;
 
 const $=s=>document.querySelector(s);
 const euro=n=>'€'+n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});
 const initials=n=>n.trim().slice(0,2).toUpperCase()||'?';
+// Wie deelt er feitelijk in een uitgave? Bij "iedereen" groeit dit automatisch mee met nieuwe personen.
+const sharersOf=e=>e.sharedAll?people.map(p=>p.id):e.shareIds.filter(id=>people.some(p=>p.id===id));
 
 /* ---------- People ---------- */
 function addPerson(){
@@ -317,13 +324,24 @@ function renderPeople(){
 /* ---------- Expense form ---------- */
 function renderPayerOptions(){
   const sel=$('#expPayer');
+  const cur=sel.value;
   sel.innerHTML=people.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  // behoud selectie bij re-render (bijv. tijdens bewerken)
+  if(editingId){const e=expenses.find(x=>x.id===editingId);if(e)sel.value=e.payerId;}
+  else if(cur&&people.some(p=>String(p.id)===cur))sel.value=cur;
 }
 function renderShareChecks(){
   const box=$('#shareChecks');
-  box.innerHTML=people.map(p=>
-    `<label><input type="checkbox" value="${p.id}" checked><span class="av" style="background:${p.color};width:22px;height:22px;font-size:12px;display:inline-grid;place-items:center;border-radius:50%;color:#fff">${initials(p.name)}</span>${escapeHtml(p.name)}</label>`
-  ).join('');
+  // Bij bewerken van een "sommige"-uitgave: vink de opgeslagen personen aan; anders standaard alles aan.
+  let selected=null;
+  if(editingId){
+    const e=expenses.find(x=>x.id===editingId);
+    if(e&&!e.sharedAll)selected=new Set(e.shareIds);
+  }
+  box.innerHTML=people.map(p=>{
+    const checked=selected?(selected.has(p.id)?'checked':''):'checked';
+    return `<label><input type="checkbox" value="${p.id}" ${checked}><span class="av" style="background:${p.color};width:22px;height:22px;font-size:12px;display:inline-grid;place-items:center;border-radius:50%;color:#fff">${initials(p.name)}</span>${escapeHtml(p.name)}</label>`;
+  }).join('');
 }
 function setMode(mode){
   splitMode=mode;
@@ -337,16 +355,48 @@ function addExpense(){
   const payerId=parseInt($('#expPayer').value);
   if(!amount||amount<=0){flash('#expAmt');return;}
   if(!payerId)return;
-  let shareIds;
-  if(splitMode==='all'){shareIds=people.map(p=>p.id);}
-  else{
+  const sharedAll=splitMode==='all';
+  let shareIds=[];
+  if(!sharedAll){
     shareIds=[...document.querySelectorAll('#shareChecks input:checked')].map(c=>parseInt(c.value));
     if(!shareIds.length){flash('#shareChecks');return;}
   }
-  expenses.push({id:++eid,what,amount,payerId,shareIds});
+  if(editingId){
+    const e=expenses.find(x=>x.id===editingId);
+    if(e){Object.assign(e,{what,amount,payerId,sharedAll,shareIds});}
+    stopEdit();
+  }else{
+    expenses.push({id:++eid,what,amount,payerId,sharedAll,shareIds});
+  }
   $('#expWhat').value='';$('#expAmt').value='';
   setMode('all');
   renderAll();$('#expWhat').focus();
+}
+function startEdit(id){
+  const e=expenses.find(x=>x.id===id);
+  if(!e)return;
+  editingId=id;
+  $('#expWhat').value=e.what;
+  $('#expAmt').value=e.amount;
+  renderPayerOptions();            // (re)build options so we can select the payer
+  $('#expPayer').value=e.payerId;
+  setMode(e.sharedAll?'all':'some');
+  renderShareChecks();
+  $('#expFormTitle').textContent='Uitgave bewerken';
+  $('#addExpense').textContent='Wijzigingen opslaan';
+  $('#cancelEdit').style.display='';
+  $('#expenseCard').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#expWhat').focus();
+}
+function stopEdit(){
+  editingId=null;
+  $('#expFormTitle').textContent='Nieuwe uitgave';
+  $('#addExpense').textContent='Uitgave opslaan';
+  $('#cancelEdit').style.display='none';
+}
+function cancelEdit(){
+  $('#expWhat').value='';$('#expAmt').value='';
+  setMode('all');stopEdit();renderAll();
 }
 function flash(sel){const el=$(sel);el.style.boxShadow='3px 3px 0 var(--coral)';setTimeout(()=>el.style.boxShadow='',500);}
 
@@ -359,19 +409,26 @@ function renderExpenses(){
   sub.innerHTML=`${expenses.length} ${expenses.length===1?'uitgave':'uitgaven'} · samen <b>${euro(total)}</b>`;
   expenses.forEach(e=>{
     const payer=people.find(p=>p.id===e.payerId);
-    const all=e.shareIds.length===people.length;
-    const names=e.shareIds.map(id=>people.find(p=>p.id===id)?.name).filter(Boolean).join(', ');
+    const shareIds=sharersOf(e);
+    const names=shareIds.map(id=>people.find(p=>p.id===id)?.name).filter(Boolean).join(', ');
+    const editing=e.id===editingId;
     const d=document.createElement('div');d.className='exp';
+    if(editing)d.style.outline='3px dashed var(--grape)';
     d.style.setProperty('--paycol',payer?payer.color:'var(--mint)');
     d.innerHTML=`
       <div class="exp-top">
         <span class="exp-what">${escapeHtml(e.what)}</span>
         <span class="exp-amt">${euro(e.amount)}</span>
+        <button class="del edit" title="Bewerken">✏️</button>
         <button class="del" title="Verwijderen">🗑️</button>
       </div>
       <div class="exp-meta">Betaald door <span class="who">${payer?escapeHtml(payer.name):'?'}</span> ·
-      ${all?'gedeeld door iedereen':'voor <span class="who">'+escapeHtml(names)+'</span>'}</div>`;
-    d.querySelector('.del').onclick=()=>{expenses=expenses.filter(x=>x.id!==e.id);renderAll();};
+      ${e.sharedAll?'gedeeld door iedereen':'voor <span class="who">'+escapeHtml(names)+'</span>'}</div>`;
+    d.querySelector('.edit').onclick=()=>startEdit(e.id);
+    d.querySelectorAll('.del')[1].onclick=()=>{
+      if(e.id===editingId)cancelEdit();
+      expenses=expenses.filter(x=>x.id!==e.id);renderAll();
+    };
     box.appendChild(d);
   });
 }
@@ -380,8 +437,10 @@ function renderExpenses(){
 function computeBalances(){
   const bal={};people.forEach(p=>bal[p.id]=0);
   expenses.forEach(e=>{
-    const share=e.amount/e.shareIds.length;
-    e.shareIds.forEach(id=>{if(bal[id]!==undefined)bal[id]-=share;});
+    const shareIds=sharersOf(e);
+    if(!shareIds.length)return;
+    const share=e.amount/shareIds.length;
+    shareIds.forEach(id=>{if(bal[id]!==undefined)bal[id]-=share;});
     if(bal[e.payerId]!==undefined)bal[e.payerId]+=e.amount;
   });
   return bal;
@@ -430,37 +489,57 @@ function renderResults(){
   if(!tx.length){setBox.innerHTML='<div class="allset">🎉 Iedereen staat gelijk!</div>';return;}
   setBox.innerHTML=tx.map(t=>{
     const from=people.find(p=>p.id===t.from),to=people.find(p=>p.id===t.to);
-    const desc=`Splitsie: ${from.name} → ${to.name}`;
-    const tikkie=`https://tikkie.me/pay/`; // opens Tikkie; requester fills amount
-    const mailto=`mailto:?subject=${encodeURIComponent('Betaalverzoek: '+euro(t.amt))}&body=${encodeURIComponent('Hoi '+from.name+',\n\nZou je '+euro(t.amt)+' aan '+to.name+' willen overmaken voor de gedeelde kosten?\n\nGroet!')}`;
     return `<div class="settle">
       <span class="txt"><b>${escapeHtml(from.name)}</b> <span class="arrow">→</span> <b>${escapeHtml(to.name)}</b></span>
       <span class="amount">${euro(t.amt)}</span>
-      <button class="btn grape pay" onclick="sendRequest('${encodeURIComponent(from.name)}','${encodeURIComponent(to.name)}',${t.amt})">💸 Verzoek sturen</button>
     </div>`;
   }).join('');
 }
 
-/* ---------- Payment request ---------- */
-function sendRequest(fromEnc,toEnc,amt){
-  const from=decodeURIComponent(fromEnc),to=decodeURIComponent(toEnc);
-  const amount=euro(amt);
-  const body=`Hoi ${from},\n\nWil je ${amount} aan ${to} overmaken voor de gedeelde kosten? Alvast bedankt! 🧡`;
-  // Try Web Share (mobile) first, then fall back to a friendly chooser.
-  if(navigator.share){
-    navigator.share({title:'Betaalverzoek '+amount,text:body}).catch(()=>{});
-    return;
-  }
-  const choice=window.prompt(
-    `Betaalverzoek voor ${from}: ${amount}\n\nKies hoe je het wilt versturen:\n`+
-    `1 = Tikkie openen\n2 = E-mail met verzoek\n3 = Tekst kopiëren`,'1');
-  if(choice==='1'){
-    window.open('https://www.tikkie.me/','_blank');
-  }else if(choice==='2'){
-    window.location.href=`mailto:?subject=${encodeURIComponent('Betaalverzoek '+amount)}&body=${encodeURIComponent(body)}`;
-  }else if(choice==='3'){
-    navigator.clipboard?.writeText(body).then(()=>alert('Gekopieerd! Plak het in WhatsApp of je bankapp.'));
-  }
+/* ---------- Copy summary ---------- */
+function buildSummary(){
+  const total=expenses.reduce((s,e)=>s+e.amount,0);
+  const perHead=people.length?total/people.length:0;
+  const bal=computeBalances();
+  const tx=minimizeTransfers(bal);
+  const L=[];
+  L.push('💸 Splitsie — overzicht');
+  L.push('');
+  L.push(`Totaal: ${euro(total)} · ${people.length} personen · ${euro(perHead)} p.p.`);
+  L.push('');
+  L.push('Uitgaven:');
+  expenses.forEach(e=>{
+    const payer=people.find(p=>p.id===e.payerId);
+    const who=e.sharedAll?'iedereen':sharersOf(e).map(id=>people.find(p=>p.id===id)?.name).filter(Boolean).join(', ');
+    L.push(`• ${e.what} — ${euro(e.amount)} (betaald door ${payer?payer.name:'?'}, voor ${who})`);
+  });
+  L.push('');
+  L.push('Wie betaalt wie:');
+  if(!tx.length){L.push('• Iedereen staat gelijk 🎉');}
+  else tx.forEach(t=>{
+    const from=people.find(p=>p.id===t.from),to=people.find(p=>p.id===t.to);
+    L.push(`• ${from.name} → ${to.name}: ${euro(t.amt)}`);
+  });
+  return L.join('\n');
+}
+function copySummary(){
+  if(!people.length||!expenses.length){flash('#copySummary');return;}
+  const text=buildSummary();
+  const done=()=>{
+    const b=$('#copySummary');const orig=b.textContent;
+    b.textContent='✅ Gekopieerd! Nu plakken & delen';
+    setTimeout(()=>b.textContent=orig,2200);
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  }else{fallbackCopy(text,done);}
+}
+function fallbackCopy(text,done){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.position='fixed';ta.style.top='-1000px';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');done();}catch(e){alert(text);}
+  document.body.removeChild(ta);
 }
 
 /* ---------- utils ---------- */
@@ -478,6 +557,8 @@ $('#addPerson').onclick=addPerson;
 $('#personName').addEventListener('keydown',e=>{if(e.key==='Enter')addPerson();});
 $('#expAmt').addEventListener('keydown',e=>{if(e.key==='Enter')addExpense();});
 $('#addExpense').onclick=addExpense;
+$('#cancelEdit').onclick=cancelEdit;
+$('#copySummary').onclick=copySummary;
 $('#tgAll').onclick=()=>setMode('all');
 $('#tgSome').onclick=()=>setMode('some');
 $('#ghlink').onclick=e=>{e.preventDefault();alert('Vervang deze link in index.html door de URL van je eigen GitHub-repo 🙂');};
