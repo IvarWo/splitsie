@@ -251,9 +251,9 @@
   footer a{color:var(--grape-deep)}
   .note{font-size:13px;color:var(--muted-soft);font-weight:700;margin-top:14px;text-align:center}
 
-  /* ---------- Top controls (taal + thema) — vast rechtsboven ---------- */
+  /* ---------- Top controls (taal + thema) — scrollen mee weg met de header ---------- */
   .top-controls{
-    position:fixed;top:14px;right:14px;z-index:60;
+    position:absolute;top:14px;right:14px;z-index:60;
     display:flex;gap:8px;align-items:flex-start;
   }
   .ctrl-btn{
@@ -295,7 +295,7 @@
     body{padding-bottom:60px}
     .wrap{padding:0 14px}
 
-    /* Op smalle telefoons alleen de vlag/het icoon tonen, knoppen blijven vast bovenaan. */
+    /* Op smalle telefoons alleen de vlag/het icoon tonen; knoppen scrollen mee weg met de header. */
     .top-controls{top:12px;right:12px;gap:6px}
     .ctrl-btn{padding:8px 11px}
     .ctrl-btn .txt{display:none}
@@ -1262,10 +1262,10 @@ function initLang(){
   let saved=null;
   try{saved=localStorage.getItem(LANG_KEY);}catch(e){}
   if(!saved){
-    const nav=(navigator.language||'nl').slice(0,2).toLowerCase();
-    saved=I18N[nav]?nav:'nl';
+    const nav=(navigator.language||'en').slice(0,2).toLowerCase();
+    saved=I18N[nav]?nav:'en';
   }
-  lang=I18N[saved]?saved:'nl';
+  lang=I18N[saved]?saved:'en';
   buildLangMenu();
 }
 
