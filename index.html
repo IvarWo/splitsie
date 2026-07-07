@@ -599,6 +599,11 @@ function updateFormState(){
   $('#addExpense').disabled=!ok;
   $('#expWhat').disabled=!ok;$('#expAmt').disabled=!ok;$('#expPayer').disabled=!ok;
   $('#expenseCard').style.opacity=ok?'1':'.55';
+  // Kopieerknop pas actief zodra er iets te delen valt.
+  const canShare=people.length>=1&&expenses.length>=1;
+  const copyBtn=$('#copySummary');
+  copyBtn.disabled=!canShare;
+  copyBtn.title=canShare?'':'Voeg eerst een uitgave toe';
 }
 
 /* ---------- events ---------- */
