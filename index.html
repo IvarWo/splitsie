@@ -165,19 +165,57 @@
   .field label{display:block;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
   .split-toggle{display:flex;gap:8px;flex-wrap:wrap}
   .toggle{
-    flex:1;min-width:150px;text-align:center;cursor:pointer;
-    border:2.5px solid var(--ink);border-radius:12px;padding:12px;font-weight:800;font-size:15px;
+    flex:1;min-width:110px;text-align:center;cursor:pointer;
+    border:2.5px solid var(--ink);border-radius:12px;padding:12px 8px;font-weight:800;font-size:14px;
     background:var(--surface);transition:transform .1s;user-select:none;
   }
   .toggle:hover{transform:translateY(-2px)}
   .toggle.on{background:var(--mint);color:var(--on-accent);box-shadow:var(--shadow-hard)}
   .toggle.on.pick{background:var(--pink)}
+  .toggle.on.custom{background:var(--lemon)}
   .checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
   .checks label{
     display:flex;align-items:center;gap:7px;background:var(--paper);
     border:2.5px solid var(--ink);border-radius:40px;padding:7px 14px;font-weight:700;cursor:pointer;font-size:15px;
   }
   .checks input{width:17px;height:17px;accent-color:var(--grape)}
+
+  /* ---------- Custom (per-persoon) verdeling ---------- */
+  .customsplit{margin-top:8px}
+  .csrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .csrow .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:'Fredoka';font-size:13px;flex-shrink:0}
+  .csrow .csname{font-weight:700;flex:1;min-width:60px}
+  .csrow input{width:110px;text-align:right}
+  .cstally{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:var(--paper);border:2.5px solid var(--ink);border-radius:12px;
+    padding:8px 14px;font-weight:800;margin-top:4px;font-size:14px;
+  }
+  .cstally.ok{border-color:var(--mint-deep)}
+  .cstally.off{border-color:var(--coral)}
+  .cstally .diff.ok{color:var(--mint-deep)}
+  .cstally .diff.off{color:var(--coral)}
+  .csrow .btn.mini{padding:8px 12px;font-size:14px}
+
+  /* ---------- Shared read-only banner ---------- */
+  .banner{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--lemon);color:var(--on-accent);
+    border:3px solid var(--ink);border-radius:18px;box-shadow:var(--shadow-hard);
+    padding:16px 18px;margin:22px 0;
+  }
+  .banner-ic{font-size:26px;line-height:1}
+  .banner-txt{flex:1;min-width:180px;display:flex;flex-direction:column;gap:2px;font-weight:600}
+  .banner-txt b{font-family:'Fredoka';font-weight:600;font-size:17px}
+  .banner-txt span{font-size:14px}
+
+  /* ---------- text link button ---------- */
+  .linklike{
+    display:block;margin:14px auto 0;background:none;border:none;cursor:pointer;
+    color:var(--muted-soft);font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;
+    text-decoration:underline;text-underline-offset:3px;
+  }
+  .linklike:hover{color:var(--coral)}
   .hidden{display:none!important}
 
   /* ---------- Results ---------- */
@@ -255,6 +293,16 @@
 
 <div class="wrap">
 
+  <!-- READ-ONLY BANNER (shown only when opened via share link) -->
+  <div class="banner hidden" id="sharedBanner">
+    <span class="banner-ic">👀</span>
+    <div class="banner-txt">
+      <b>Je bekijkt een gedeelde afrekening.</b>
+      <span>Wijzigingen worden niet bewaard. Wil je zelf verder rekenen? Maak dan een eigen kopie.</span>
+    </div>
+    <button class="btn lemon" id="makeCopy">Eigen kopie maken</button>
+  </div>
+
   <!-- STEP 1: PEOPLE -->
   <section class="card">
     <h2><span class="badge b-mint">👥</span> Wie doen er mee?</h2>
@@ -264,6 +312,7 @@
       <input type="text" id="personName" class="grow" placeholder="Naam, bijv. Sanne" maxlength="24" autocomplete="off">
       <button class="btn mint" id="addPerson">+ Toevoegen</button>
     </div>
+    <button class="linklike" id="clearAll">🗑️ Alles wissen en opnieuw beginnen</button>
   </section>
 
   <!-- STEP 2: ADD EXPENSE -->
@@ -290,10 +339,12 @@
     <div class="field">
       <label>Wie deelt in deze kosten?</label>
       <div class="split-toggle">
-        <div class="toggle on" id="tgAll" data-mode="all">🌍 Iedereen deelt mee</div>
-        <div class="toggle pick" id="tgSome" data-mode="some">✋ Alleen bepaalde mensen</div>
+        <div class="toggle on" id="tgAll" data-mode="all">🌍 Iedereen</div>
+        <div class="toggle pick" id="tgSome" data-mode="some">✋ Bepaalde mensen</div>
+        <div class="toggle custom" id="tgCustom" data-mode="custom">⚖️ Eigen bedragen</div>
       </div>
       <div class="checks hidden" id="shareChecks"></div>
+      <div class="customsplit hidden" id="customSplit"></div>
     </div>
 
     <div class="add-row">
@@ -316,8 +367,11 @@
     <div class="totals" id="totals"></div>
     <div class="balances" id="balances"></div>
     <div id="settlements"></div>
-    <button class="btn grape" id="copySummary" style="width:100%;margin-top:8px">📋 Kopieer overzicht om te delen</button>
-    <p class="note">💡 Splitsie verstuurt zelf niks en slaat niks op. Het gekopieerde overzicht deel je zelf via bijv. WhatsApp.</p>
+    <div class="add-row" style="margin-top:8px">
+      <button class="btn grape" id="copySummary" style="flex:1">📋 Kopieer overzicht</button>
+      <button class="btn mint" id="shareLink" style="flex:1">🔗 Deel via link</button>
+    </div>
+    <p class="note">💡 Splitsie verstuurt zelf niks en slaat niks op een server op. Het overzicht en de link deel je zelf via bijv. WhatsApp.</p>
   </section>
 
   <footer>
@@ -328,16 +382,26 @@
 <script>
 const AVATAR_COLORS=['#8367c7','#ff8a76','#5bbaa8','#78c0e0','#f6a5c0','#ffd166','#8bd3c7','#6b4fb0'];
 let people=[];      // {id,name,color}
-let expenses=[];    // {id,what,amount,payerId,sharedAll:bool,shareIds:[]}  (shareIds only used when sharedAll=false)
+// expense.split: 'all' | 'some' | 'custom'
+//  - 'all'    → iedereen deelt gelijk (groeit mee met nieuwe personen)
+//  - 'some'   → alleen shareIds delen gelijk
+//  - 'custom' → custom{personId:euro} bedragen, moeten optellen tot amount
+let expenses=[];
 let splitMode='all';
 let editingId=null; // id of expense being edited, or null
+let readOnly=false; // true wanneer via deel-link geopend
 let pid=0, eid=0;
+const STORAGE_KEY='splitsie-data-v1';
 
 const $=s=>document.querySelector(s);
 const euro=n=>'€'+n.toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});
 const initials=n=>n.trim().slice(0,2).toUpperCase()||'?';
 // Wie deelt er feitelijk in een uitgave? Bij "iedereen" groeit dit automatisch mee met nieuwe personen.
-const sharersOf=e=>e.sharedAll?people.map(p=>p.id):e.shareIds.filter(id=>people.some(p=>p.id===id));
+function sharersOf(e){
+  if(e.split==='all')return people.map(p=>p.id);
+  if(e.split==='custom')return Object.keys(e.custom||{}).map(Number).filter(id=>people.some(p=>p.id===id));
+  return (e.shareIds||[]).filter(id=>people.some(p=>p.id===id));
+}
 
 /* ---------- People ---------- */
 function addPerson(){
@@ -350,13 +414,16 @@ function addPerson(){
   }
   people.push({id:++pid,name,color:AVATAR_COLORS[people.length%AVATAR_COLORS.length]});
   inp.value='';inp.focus();
-  renderAll();
+  save();renderAll();
 }
 function removePerson(id){
   people=people.filter(p=>p.id!==id);
   expenses=expenses.filter(e=>e.payerId!==id);
-  expenses.forEach(e=>e.shareIds=e.shareIds.filter(s=>s!==id));
-  renderAll();
+  expenses.forEach(e=>{
+    if(e.shareIds)e.shareIds=e.shareIds.filter(s=>s!==id);
+    if(e.custom)delete e.custom[id];
+  });
+  save();renderAll();
 }
 function renderPeople(){
   const box=$('#peopleList');
@@ -385,18 +452,75 @@ function renderShareChecks(){
   let selected=null;
   if(editingId){
     const e=expenses.find(x=>x.id===editingId);
-    if(e&&!e.sharedAll)selected=new Set(e.shareIds);
+    if(e&&e.split==='some')selected=new Set(e.shareIds);
   }
   box.innerHTML=people.map(p=>{
     const checked=selected?(selected.has(p.id)?'checked':''):'checked';
     return `<label><input type="checkbox" value="${p.id}" ${checked}><span class="av" style="background:${p.color};width:22px;height:22px;font-size:12px;display:inline-grid;place-items:center;border-radius:50%;color:#fff">${initials(p.name)}</span>${escapeHtml(p.name)}</label>`;
   }).join('');
 }
+function renderCustomSplit(){
+  const box=$('#customSplit');
+  // Bestaande custom-bedragen ophalen bij bewerken.
+  let preset={};
+  if(editingId){
+    const e=expenses.find(x=>x.id===editingId);
+    if(e&&e.split==='custom')preset=e.custom||{};
+  }
+  box.innerHTML=people.map(p=>{
+    const v=preset[p.id]!=null?preset[p.id]:'';
+    return `<div class="csrow">
+      <span class="av" style="background:${p.color}">${initials(p.name)}</span>
+      <span class="csname">${escapeHtml(p.name)}</span>
+      <input type="number" class="csamt" data-pid="${p.id}" min="0" step="0.01" placeholder="0,00" value="${v}">
+    </div>`;
+  }).join('')+`<div class="cstally" id="csTally"></div>
+    <div style="text-align:right"><button type="button" class="btn mint mini" id="csSplitEven" style="margin-top:2px">Gelijk verdelen</button></div>`;
+  box.querySelectorAll('.csamt').forEach(inp=>inp.addEventListener('input',updateCustomTally));
+  const even=box.querySelector('#csSplitEven');
+  if(even)even.onclick=splitEvenIntoCustom;
+  updateCustomTally();
+}
+function customTotal(){
+  return [...document.querySelectorAll('#customSplit .csamt')]
+    .reduce((s,i)=>s+(parseFloat(i.value)||0),0);
+}
+function updateCustomTally(){
+  const tally=$('#csTally');if(!tally)return;
+  const goal=parseFloat($('#expAmt').value)||0;
+  const sum=customTotal();
+  const diff=Math.round((goal-sum)*100)/100;
+  const ok=Math.abs(diff)<0.005&&goal>0;
+  tally.className='cstally '+(ok?'ok':'off');
+  let msg;
+  if(!goal)msg='Vul eerst het bedrag hierboven in';
+  else if(ok)msg='Klopt precies! 🎉';
+  else if(diff>0)msg=`Nog ${euro(diff)} te verdelen`;
+  else msg=`${euro(-diff)} te veel verdeeld`;
+  tally.innerHTML=`<span>Verdeeld: ${euro(sum)} / ${euro(goal)}</span><span class="diff ${ok?'ok':'off'}">${msg}</span>`;
+}
+function splitEvenIntoCustom(){
+  const goal=parseFloat($('#expAmt').value)||0;
+  const inputs=[...document.querySelectorAll('#customSplit .csamt')];
+  if(!goal||!inputs.length){flash('#expAmt');return;}
+  const n=inputs.length;
+  const base=Math.floor((goal/n)*100)/100;
+  let rest=Math.round((goal-base*n)*100)/100; // restcent(en) toebedelen
+  inputs.forEach((inp,idx)=>{
+    let v=base;
+    if(rest>0.005){v=Math.round((v+0.01)*100)/100;rest=Math.round((rest-0.01)*100)/100;}
+    inp.value=v.toFixed(2);
+  });
+  updateCustomTally();
+}
 function setMode(mode){
   splitMode=mode;
   $('#tgAll').classList.toggle('on',mode==='all');
   $('#tgSome').classList.toggle('on',mode==='some');
-  $('#shareChecks').classList.toggle('hidden',mode==='all');
+  $('#tgCustom').classList.toggle('on',mode==='custom');
+  $('#shareChecks').classList.toggle('hidden',mode!=='some');
+  $('#customSplit').classList.toggle('hidden',mode!=='custom');
+  if(mode==='custom')updateCustomTally();
 }
 function addExpense(){
   const what=$('#expWhat').value.trim()||'Uitgave';
@@ -404,22 +528,31 @@ function addExpense(){
   const payerId=parseInt($('#expPayer').value);
   if(!amount||amount<=0){flash('#expAmt');return;}
   if(!payerId)return;
-  const sharedAll=splitMode==='all';
-  let shareIds=[];
-  if(!sharedAll){
-    shareIds=[...document.querySelectorAll('#shareChecks input:checked')].map(c=>parseInt(c.value));
-    if(!shareIds.length){flash('#shareChecks');return;}
+  let data={what,amount,payerId,split:splitMode,shareIds:[],custom:null};
+  if(splitMode==='some'){
+    data.shareIds=[...document.querySelectorAll('#shareChecks input:checked')].map(c=>parseInt(c.value));
+    if(!data.shareIds.length){flash('#shareChecks');return;}
+  }else if(splitMode==='custom'){
+    const custom={};
+    document.querySelectorAll('#customSplit .csamt').forEach(i=>{
+      const v=parseFloat(i.value);
+      if(v>0)custom[parseInt(i.dataset.pid)]=Math.round(v*100)/100;
+    });
+    const sum=Object.values(custom).reduce((s,v)=>s+v,0);
+    if(Math.abs(sum-amount)>=0.005){flash('#csTally');updateCustomTally();return;}
+    if(!Object.keys(custom).length){flash('#customSplit');return;}
+    data.custom=custom;
   }
   if(editingId){
     const e=expenses.find(x=>x.id===editingId);
-    if(e){Object.assign(e,{what,amount,payerId,sharedAll,shareIds});}
+    if(e)Object.assign(e,data);
     stopEdit();
   }else{
-    expenses.push({id:++eid,what,amount,payerId,sharedAll,shareIds});
+    expenses.push({id:++eid,...data});
   }
   $('#expWhat').value='';$('#expAmt').value='';
   setMode('all');
-  renderAll();$('#expWhat').focus();
+  save();renderAll();$('#expWhat').focus();
 }
 function startEdit(id){
   const e=expenses.find(x=>x.id===id);
@@ -429,8 +562,9 @@ function startEdit(id){
   $('#expAmt').value=e.amount;
   renderPayerOptions();            // (re)build options so we can select the payer
   $('#expPayer').value=e.payerId;
-  setMode(e.sharedAll?'all':'some');
+  setMode(e.split);
   renderShareChecks();
+  renderCustomSplit();
   $('#expFormTitle').textContent='Uitgave bewerken';
   $('#addExpense').textContent='Wijzigingen opslaan';
   $('#cancelEdit').style.display='';
@@ -464,20 +598,30 @@ function renderExpenses(){
     const d=document.createElement('div');d.className='exp';
     if(editing)d.style.outline='3px dashed var(--grape)';
     d.style.setProperty('--paycol',payer?payer.color:'var(--mint)');
+    let split;
+    if(e.split==='all')split='gedeeld door iedereen';
+    else if(e.split==='custom'){
+      const parts=Object.entries(e.custom||{}).map(([id,v])=>{
+        const nm=people.find(p=>p.id===Number(id))?.name;return nm?nm+' '+euro(v):null;
+      }).filter(Boolean).join(', ');
+      split='eigen bedragen — <span class="who">'+escapeHtml(parts)+'</span>';
+    }else split='voor <span class="who">'+escapeHtml(names)+'</span>';
+    const controls=readOnly?'':`
+        <button class="del edit" title="Bewerken">✏️</button>
+        <button class="del rm" title="Verwijderen">🗑️</button>`;
     d.innerHTML=`
       <div class="exp-top">
         <span class="exp-what">${escapeHtml(e.what)}</span>
-        <span class="exp-amt">${euro(e.amount)}</span>
-        <button class="del edit" title="Bewerken">✏️</button>
-        <button class="del" title="Verwijderen">🗑️</button>
+        <span class="exp-amt">${euro(e.amount)}</span>${controls}
       </div>
-      <div class="exp-meta">Betaald door <span class="who">${payer?escapeHtml(payer.name):'?'}</span> ·
-      ${e.sharedAll?'gedeeld door iedereen':'voor <span class="who">'+escapeHtml(names)+'</span>'}</div>`;
-    d.querySelector('.edit').onclick=()=>startEdit(e.id);
-    d.querySelectorAll('.del')[1].onclick=()=>{
-      if(e.id===editingId)cancelEdit();
-      expenses=expenses.filter(x=>x.id!==e.id);renderAll();
-    };
+      <div class="exp-meta">Betaald door <span class="who">${payer?escapeHtml(payer.name):'?'}</span> · ${split}</div>`;
+    if(!readOnly){
+      d.querySelector('.edit').onclick=()=>startEdit(e.id);
+      d.querySelector('.rm').onclick=()=>{
+        if(e.id===editingId)cancelEdit();
+        expenses=expenses.filter(x=>x.id!==e.id);save();renderAll();
+      };
+    }
     box.appendChild(d);
   });
 }
@@ -486,11 +630,17 @@ function renderExpenses(){
 function computeBalances(){
   const bal={};people.forEach(p=>bal[p.id]=0);
   expenses.forEach(e=>{
-    const shareIds=sharersOf(e);
-    if(!shareIds.length)return;
-    const share=e.amount/shareIds.length;
-    shareIds.forEach(id=>{if(bal[id]!==undefined)bal[id]-=share;});
     if(bal[e.payerId]!==undefined)bal[e.payerId]+=e.amount;
+    if(e.split==='custom'){
+      Object.entries(e.custom||{}).forEach(([id,v])=>{
+        const pid=Number(id);if(bal[pid]!==undefined)bal[pid]-=v;
+      });
+    }else{
+      const shareIds=sharersOf(e);
+      if(!shareIds.length)return;
+      const share=e.amount/shareIds.length;
+      shareIds.forEach(id=>{if(bal[id]!==undefined)bal[id]-=share;});
+    }
   });
   return bal;
 }
@@ -559,7 +709,12 @@ function buildSummary(){
   L.push('Uitgaven:');
   expenses.forEach(e=>{
     const payer=people.find(p=>p.id===e.payerId);
-    const who=e.sharedAll?'iedereen':sharersOf(e).map(id=>people.find(p=>p.id===id)?.name).filter(Boolean).join(', ');
+    let who;
+    if(e.split==='all')who='iedereen';
+    else if(e.split==='custom')who=Object.entries(e.custom||{}).map(([id,v])=>{
+      const nm=people.find(p=>p.id===Number(id))?.name;return nm?nm+' '+euro(v):null;
+    }).filter(Boolean).join(', ');
+    else who=sharersOf(e).map(id=>people.find(p=>p.id===id)?.name).filter(Boolean).join(', ');
     L.push(`• ${e.what} — ${euro(e.amount)} (betaald door ${payer?payer.name:'?'}, voor ${who})`);
   });
   L.push('');
@@ -593,29 +748,145 @@ function fallbackCopy(text,done){
 
 /* ---------- utils ---------- */
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function renderAll(){renderPeople();renderPayerOptions();renderShareChecks();renderExpenses();renderResults();updateFormState();}
+function renderAll(){renderPeople();renderPayerOptions();renderShareChecks();renderCustomSplit();renderExpenses();renderResults();updateFormState();}
 function updateFormState(){
   const ok=people.length>=1;
   $('#addExpense').disabled=!ok;
   $('#expWhat').disabled=!ok;$('#expAmt').disabled=!ok;$('#expPayer').disabled=!ok;
   $('#expenseCard').style.opacity=ok?'1':'.55';
-  // Kopieerknop pas actief zodra er iets te delen valt.
+  // Kopieer- en deelknop pas actief zodra er iets te delen valt.
   const canShare=people.length>=1&&expenses.length>=1;
-  const copyBtn=$('#copySummary');
-  copyBtn.disabled=!canShare;
-  copyBtn.title=canShare?'':'Voeg eerst een uitgave toe';
+  ['#copySummary','#shareLink'].forEach(sel=>{
+    const b=$(sel);b.disabled=!canShare;
+    b.title=canShare?'':'Voeg eerst een uitgave toe';
+  });
 }
 
 /* ---------- events ---------- */
 $('#addPerson').onclick=addPerson;
 $('#personName').addEventListener('keydown',e=>{if(e.key==='Enter')addPerson();});
 $('#expAmt').addEventListener('keydown',e=>{if(e.key==='Enter')addExpense();});
+$('#expAmt').addEventListener('input',()=>{if(splitMode==='custom')updateCustomTally();});
 $('#addExpense').onclick=addExpense;
 $('#cancelEdit').onclick=cancelEdit;
 $('#copySummary').onclick=copySummary;
+$('#shareLink').onclick=shareViaLink;
+$('#clearAll').onclick=clearAll;
+$('#makeCopy').onclick=makeEditableCopy;
 $('#tgAll').onclick=()=>setMode('all');
 $('#tgSome').onclick=()=>setMode('some');
+$('#tgCustom').onclick=()=>setMode('custom');
 $('#ghlink').onclick=e=>{e.preventDefault();alert('Vervang deze link in index.html door de URL van je eigen GitHub-repo 🙂');};
+
+/* ---------- Persistentie (localStorage) ---------- */
+function save(){
+  if(readOnly)return; // gedeelde weergave nooit opslaan
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({people,expenses,pid,eid}));}catch(e){}
+}
+function loadFromStorage(){
+  let raw=null;
+  try{raw=localStorage.getItem(STORAGE_KEY);}catch(e){}
+  if(!raw)return false;
+  try{
+    const d=JSON.parse(raw);
+    ({people,expenses}=normalize(d));
+    pid=d.pid||Math.max(0,...people.map(p=>p.id));
+    eid=d.eid||Math.max(0,...expenses.map(x=>x.id));
+    return true;
+  }catch(e){return false;}
+}
+// Zorgt dat oudere/gedeelde data het huidige model volgt (sharedAll → split).
+function normalize(d){
+  const pl=(d.people||[]).map(p=>({id:p.id,name:String(p.name||'?'),color:p.color||AVATAR_COLORS[0]}));
+  const ex=(d.expenses||[]).map(e=>{
+    let split=e.split;
+    if(!split)split=e.sharedAll?'all':(e.custom?'custom':'some'); // migratie oud model
+    return{
+      id:e.id,what:String(e.what||'Uitgave'),
+      amount:Number(e.amount)||0,payerId:e.payerId,
+      split,
+      shareIds:Array.isArray(e.shareIds)?e.shareIds:[],
+      custom:e.custom&&typeof e.custom==='object'?e.custom:null
+    };
+  });
+  return{people:pl,expenses:ex};
+}
+
+/* ---------- Delen via link ---------- */
+// Compacte payload → base64 in de URL-hash (#s=...). Geen server nodig.
+function buildShareUrl(){
+  const payload={
+    p:people.map(p=>[p.id,p.name,p.color]),
+    e:expenses.map(x=>[x.id,x.what,x.amount,x.payerId,x.split,x.shareIds||[],x.custom||0])
+  };
+  const json=JSON.stringify(payload);
+  const b64=btoa(unescape(encodeURIComponent(json)));
+  return location.origin+location.pathname+'#s='+b64;
+}
+function parseShareData(b64){
+  const json=decodeURIComponent(escape(atob(b64)));
+  const d=JSON.parse(json);
+  const people=(d.p||[]).map(a=>({id:a[0],name:a[1],color:a[2]}));
+  const expenses=(d.e||[]).map(a=>({
+    id:a[0],what:a[1],amount:a[2],payerId:a[3],
+    split:a[4],shareIds:a[5]||[],custom:a[6]||null
+  }));
+  return{people,expenses};
+}
+function shareViaLink(){
+  if(!people.length||!expenses.length){flash('#shareLink');return;}
+  const url=buildShareUrl();
+  const done=()=>{
+    const b=$('#shareLink');const orig=b.textContent;
+    b.textContent='✅ Link gekopieerd!';
+    setTimeout(()=>b.textContent=orig,2200);
+  };
+  if(navigator.share){
+    navigator.share({title:'Splitsie afrekening',url}).then(done).catch(()=>{
+      copyText(url,done);
+    });
+  }else copyText(url,done);
+}
+function copyText(text,done){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  }else fallbackCopy(text,done);
+}
+
+/* ---------- Read-only (gedeelde weergave) ---------- */
+function enterReadOnly(data){
+  readOnly=true;
+  people=data.people;expenses=data.expenses;
+  document.body.classList.add('is-shared');
+  $('#sharedBanner').classList.remove('hidden');
+  // Invoer-secties verbergen: je bekijkt andermans afrekening.
+  $('#expenseCard').classList.add('hidden');
+  document.querySelector('.card').classList.add('hidden'); // people-card (eerste .card)
+  $('#shareLink').classList.add('hidden'); // niet opnieuw delen; kopiëren mag wel
+}
+function makeEditableCopy(){
+  // Zet de gedeelde data om in een eigen, bewerkbare (opgeslagen) afrekening.
+  readOnly=false;
+  document.body.classList.remove('is-shared');
+  $('#sharedBanner').classList.add('hidden');
+  $('#expenseCard').classList.remove('hidden');
+  document.querySelector('.card').classList.remove('hidden');
+  $('#shareLink').classList.remove('hidden');
+  pid=Math.max(0,...people.map(p=>p.id));
+  eid=Math.max(0,...expenses.map(x=>x.id));
+  history.replaceState(null,'',location.origin+location.pathname); // hash weghalen
+  save();renderAll();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- Alles wissen ---------- */
+function clearAll(){
+  if(!people.length&&!expenses.length)return;
+  if(!confirm('Weet je het zeker? Alle personen en uitgaven worden gewist.'))return;
+  people=[];expenses=[];pid=0;eid=0;editingId=null;
+  try{localStorage.removeItem(STORAGE_KEY);}catch(e){}
+  cancelEdit();renderAll();
+}
 
 /* ---------- Theme ---------- */
 function applyTheme(mode){
@@ -637,7 +908,18 @@ $('#themeToggle').onclick=()=>{
 };
 initTheme();
 
-renderAll();
+/* ---------- Opstart ---------- */
+(function init(){
+  const m=location.hash.match(/^#s=(.+)$/);
+  if(m){
+    try{
+      const data=parseShareData(m[1]);
+      if(data.people.length){enterReadOnly(data);renderAll();return;}
+    }catch(e){/* ongeldige link → val terug op normale modus */}
+  }
+  loadFromStorage();
+  renderAll();
+})();
 </script>
 </body>
 </html>

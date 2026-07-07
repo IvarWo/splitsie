@@ -8,9 +8,11 @@ Geen server, geen account, geen tracking. Alles draait lokaal in de browser.
 
 - **Personen toevoegen** met eigen naam en gekleurde avatar.
 - **Uitgaven invoeren** per persoon: wat, hoeveel, en door wie betaald.
-- **Slim delen:** kies per uitgave of *iedereen* meedeelt, of alleen *bepaalde mensen* (jij vinkt aan wie). Voeg je later een nieuw persoon toe, dan gaat die automatisch meedelen in alle "iedereen"-uitgaven.
+- **Slim delen:** kies per uitgave of *iedereen* meedeelt, *bepaalde mensen*, of geef *eigen bedragen* per persoon op (met een live-check dat de bedragen precies optellen tot het totaal). Voeg je later een nieuw persoon toe, dan gaat die automatisch meedelen in alle "iedereen"-uitgaven.
 - **Uitgaven bewerken:** klik op ✏️ bij een uitgave om bedrag, betaler of verdeling achteraf aan te passen.
 - **Automatische afrekening:** balans per persoon + de minimale set overboekingen om iedereen gelijk te trekken.
+- **Wordt automatisch bewaard:** je afrekening blijft in je browser staan, ook na het sluiten van het tabblad. Met de knop "Alles wissen" begin je opnieuw.
+- **Delen via link:** de knop "Deel via link" maakt een link met je hele afrekening erin (zonder server). Wie die opent ziet een alleen-lezen weergave en kan er met één klik een eigen bewerkbare kopie van maken.
 - **Overzicht kopiëren:** één klik zet een beknopt overzicht (totaal, uitgaven en wie-betaalt-wie) op je klembord, klaar om te plakken en te delen via bijv. WhatsApp.
 - **Licht & donker thema:** knop rechtsboven wisselt tussen light en dark mode. Splitsie volgt standaard je systeemvoorkeur en onthoudt je keuze.
 
@@ -33,7 +35,7 @@ Elke uitgave wordt verdeeld over de mensen die eraan meedoen. De betaler krijgt 
 
 ## 🔒 Privacy
 
-Splitsie verstuurt zelf niets en slaat niets op. Het "Kopieer overzicht"-knopje zet alleen tekst op je klembord; delen doe je zelf via de app van jouw keuze.
+Splitsie verstuurt niets naar een server en heeft geen account. Je afrekening wordt alleen lokaal in je eigen browser bewaard (via localStorage) — per apparaat en per browser, en blijft staan tot je op "Alles wissen" klikt of je browsergegevens wist. De "Deel via link"-functie stopt je afrekening in de link zelf; er komt geen server aan te pas. Het "Kopieer overzicht"-knopje zet alleen tekst op je klembord; delen doe je zelf via de app van jouw keuze.
 
 ## 📄 Licentie
 
