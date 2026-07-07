@@ -118,13 +118,6 @@
   .chip .chip-rm{font-size:18px}
   .chip button:hover{color:var(--coral)}
   .chip .chip-edit:hover{color:var(--grape)}
-  /* Uitgave-tags (datum / categorie) */
-  .exp-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-  .tag-pill{
-    display:inline-flex;align-items:center;gap:4px;
-    background:var(--paper);border:2px solid var(--ink);border-radius:30px;
-    padding:3px 10px;font-size:12.5px;font-weight:700;color:var(--muted);
-  }
   .add-row{display:flex;gap:10px;flex-wrap:wrap}
   input[type=text],input[type=number],select{
     font-family:'Nunito',sans-serif;font-weight:600;font-size:16px;color:var(--ink);
@@ -218,6 +211,32 @@
   .banner-txt{flex:1;min-width:180px;display:flex;flex-direction:column;gap:2px;font-weight:600}
   .banner-txt b{font-family:'Fredoka';font-weight:600;font-size:17px}
   .banner-txt span{font-size:14px}
+
+  /* ---------- Modal (naam bewerken) ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    background:rgba(43,42,61,.45);
+    animation:fadeIn .15s ease;
+  }
+  [data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.6)}
+  .modal-box{
+    width:100%;max-width:380px;
+    background:var(--card);border:3px solid var(--ink);border-radius:22px;
+    box-shadow:var(--shadow-hard);padding:24px;
+    animation:popIn .18s ease;
+  }
+  .modal-box h3{
+    font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;margin-bottom:16px;
+  }
+  .modal-box input{width:100%;font-size:17px}
+  .modal-actions{display:flex;gap:10px;margin-top:18px}
+  .modal-actions .btn{flex:1}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes popIn{from{opacity:0;transform:scale(.92) translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .modal-overlay,.modal-box{animation:none}
+  }
 
   /* ---------- text link button ---------- */
   .linklike{
@@ -391,18 +410,6 @@
 
     <div class="add-row stack-sm" style="margin-bottom:14px">
       <div class="field grow" style="margin-bottom:0">
-        <label data-i18n="dateLabel">Datum</label>
-        <input type="date" id="expDate" style="width:100%">
-      </div>
-      <div class="field grow" style="margin-bottom:0">
-        <label data-i18n="categoryLabel">Categorie</label>
-        <input type="text" id="expCat" list="catList" data-i18n-ph="categoryPlaceholder" placeholder="Bijv. Eten" maxlength="24" autocomplete="off" style="width:100%">
-        <datalist id="catList"></datalist>
-      </div>
-    </div>
-
-    <div class="add-row stack-sm" style="margin-bottom:14px">
-      <div class="field grow" style="margin-bottom:0">
         <label data-i18n="amountLabel">Bedrag (€)</label>
         <input type="number" id="expAmt" placeholder="0,00" min="0" step="0.01" style="width:100%">
       </div>
@@ -455,6 +462,18 @@
   </footer>
 </div>
 
+<!-- Naam bewerken (modal in eigen stijl) -->
+<div class="modal-overlay hidden" id="nameModal">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="nameModalTitle">
+    <h3 id="nameModalTitle" data-i18n="editName">Naam bewerken</h3>
+    <input type="text" id="nameModalInput" maxlength="24" autocomplete="off">
+    <div class="modal-actions">
+      <button class="btn" id="nameModalCancel" data-i18n="cancel">Annuleren</button>
+      <button class="btn mint" id="nameModalSave" data-i18n="modalSave">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const AVATAR_COLORS=['#8367c7','#ff8a76','#5bbaa8','#78c0e0','#f6a5c0','#ffd166','#8bd3c7','#6b4fb0'];
 let people=[];      // {id,name,color}
@@ -491,9 +510,7 @@ const I18N={
     namePlaceholder:'Naam, bijv. Sanne',addPerson:'+ Toevoegen',clearAll:'🗑️ Alles wissen en opnieuw beginnen',
     expNew:'Nieuwe uitgave',expEdit:'Uitgave bewerken',expSubForm:'Wat is er betaald, door wie, en voor wie?',
     whatLabel:'Wat was het?',whatPlaceholder:'Boodschappen, taxi, pizza…',
-    dateLabel:'Datum',categoryLabel:'Categorie',categoryPlaceholder:'Bijv. Eten',
-    catSuggestions:['Eten & drinken','Boodschappen','Vervoer','Verblijf','Uitgaan','Activiteiten','Overig'],
-    editName:'Naam bewerken',namePrompt:'Nieuwe naam:',
+    editName:'Naam bewerken',namePrompt:'Nieuwe naam',modalSave:'Opslaan',
     amountLabel:'Bedrag (€)',payerLabel:'Betaald door',
     splitQ:'Wie deelt in deze kosten?',splitAll:'🌍 Iedereen',splitSome:'✋ Bepaalde mensen',splitCustom:'⚖️ Eigen bedragen',
     saveExpense:'Uitgave opslaan',saveEdit:'Wijzigingen opslaan',cancel:'Annuleren',
@@ -531,9 +548,7 @@ const I18N={
     namePlaceholder:'Name, e.g. Sam',addPerson:'+ Add',clearAll:'🗑️ Clear everything and start over',
     expNew:'New expense',expEdit:'Edit expense',expSubForm:'What was paid, by whom, and for whom?',
     whatLabel:'What was it?',whatPlaceholder:'Groceries, taxi, pizza…',
-    dateLabel:'Date',categoryLabel:'Category',categoryPlaceholder:'e.g. Food',
-    catSuggestions:['Food & drinks','Groceries','Transport','Accommodation','Going out','Activities','Other'],
-    editName:'Edit name',namePrompt:'New name:',
+    editName:'Edit name',namePrompt:'New name',modalSave:'Save',
     amountLabel:'Amount (€)',payerLabel:'Paid by',
     splitQ:'Who shares this cost?',splitAll:'🌍 Everyone',splitSome:'✋ Certain people',splitCustom:'⚖️ Custom amounts',
     saveExpense:'Save expense',saveEdit:'Save changes',cancel:'Cancel',
@@ -571,9 +586,7 @@ const I18N={
     namePlaceholder:'Nom, p. ex. Léa',addPerson:'+ Ajouter',clearAll:'🗑️ Tout effacer et recommencer',
     expNew:'Nouvelle dépense',expEdit:'Modifier la dépense',expSubForm:'Qu\u2019a-t-on payé, par qui, et pour qui ?',
     whatLabel:'C\u2019était quoi ?',whatPlaceholder:'Courses, taxi, pizza…',
-    dateLabel:'Date',categoryLabel:'Catégorie',categoryPlaceholder:'P. ex. Nourriture',
-    catSuggestions:['Nourriture & boissons','Courses','Transport','Hébergement','Sorties','Activités','Autre'],
-    editName:'Modifier le nom',namePrompt:'Nouveau nom :',
+    editName:'Modifier le nom',namePrompt:'Nouveau nom',modalSave:'Enregistrer',
     amountLabel:'Montant (€)',payerLabel:'Payé par',
     splitQ:'Qui partage ce coût ?',splitAll:'🌍 Tout le monde',splitSome:'✋ Certaines personnes',splitCustom:'⚖️ Montants personnalisés',
     saveExpense:'Enregistrer la dépense',saveEdit:'Enregistrer les modifications',cancel:'Annuler',
@@ -611,9 +624,7 @@ const I18N={
     namePlaceholder:'Name, z. B. Sanne',addPerson:'+ Hinzufügen',clearAll:'🗑️ Alles löschen und neu beginnen',
     expNew:'Neue Ausgabe',expEdit:'Ausgabe bearbeiten',expSubForm:'Was wurde bezahlt, von wem und für wen?',
     whatLabel:'Was war es?',whatPlaceholder:'Einkäufe, Taxi, Pizza…',
-    dateLabel:'Datum',categoryLabel:'Kategorie',categoryPlaceholder:'z. B. Essen',
-    catSuggestions:['Essen & Trinken','Einkäufe','Transport','Unterkunft','Ausgehen','Aktivitäten','Sonstiges'],
-    editName:'Namen bearbeiten',namePrompt:'Neuer Name:',
+    editName:'Namen bearbeiten',namePrompt:'Neuer Name',modalSave:'Speichern',
     amountLabel:'Betrag (€)',payerLabel:'Bezahlt von',
     splitQ:'Wer teilt diese Kosten?',splitAll:'🌍 Alle',splitSome:'✋ Bestimmte Personen',splitCustom:'⚖️ Eigene Beträge',
     saveExpense:'Ausgabe speichern',saveEdit:'Änderungen speichern',cancel:'Abbrechen',
@@ -651,9 +662,7 @@ const I18N={
     namePlaceholder:'Nombre, p. ej. Ana',addPerson:'+ Añadir',clearAll:'🗑️ Borrar todo y empezar de nuevo',
     expNew:'Nuevo gasto',expEdit:'Editar gasto',expSubForm:'¿Qué se pagó, quién y para quién?',
     whatLabel:'¿Qué fue?',whatPlaceholder:'Compra, taxi, pizza…',
-    dateLabel:'Fecha',categoryLabel:'Categoría',categoryPlaceholder:'P. ej. Comida',
-    catSuggestions:['Comida y bebida','Compra','Transporte','Alojamiento','Salir','Actividades','Otro'],
-    editName:'Editar nombre',namePrompt:'Nuevo nombre:',
+    editName:'Editar nombre',namePrompt:'Nuevo nombre',modalSave:'Guardar',
     amountLabel:'Importe (€)',payerLabel:'Pagado por',
     splitQ:'¿Quién comparte este gasto?',splitAll:'🌍 Todos',splitSome:'✋ Ciertas personas',splitCustom:'⚖️ Importes propios',
     saveExpense:'Guardar gasto',saveEdit:'Guardar cambios',cancel:'Cancelar',
@@ -691,9 +700,7 @@ const I18N={
     namePlaceholder:'姓名，例如 小明',addPerson:'+ 添加',clearAll:'🗑️ 清空并重新开始',
     expNew:'新支出',expEdit:'编辑支出',expSubForm:'花了什么、谁付的、给谁？',
     whatLabel:'这是什么？',whatPlaceholder:'买菜、打车、披萨…',
-    dateLabel:'日期',categoryLabel:'类别',categoryPlaceholder:'例如 餐饮',
-    catSuggestions:['餐饮','买菜','交通','住宿','外出','活动','其他'],
-    editName:'编辑姓名',namePrompt:'新姓名：',
+    editName:'编辑姓名',namePrompt:'新姓名',modalSave:'保存',
     amountLabel:'金额（€）',payerLabel:'付款人',
     splitQ:'谁分摊这笔费用？',splitAll:'🌍 所有人',splitSome:'✋ 指定的人',splitCustom:'⚖️ 自定义金额',
     saveExpense:'保存支出',saveEdit:'保存修改',cancel:'取消',
@@ -775,13 +782,33 @@ function renderPeople(){
     box.appendChild(c);
   });
 }
+let renamingId=null; // persoon die in de modal wordt bewerkt
 function renamePerson(id){
   const p=people.find(x=>x.id===id);
   if(!p)return;
-  const name=(prompt(t('namePrompt'),p.name)||'').trim();
-  if(!name||name===p.name)return;
-  if(people.some(x=>x.id!==id&&x.name.toLowerCase()===name.toLowerCase()))return; // dubbele naam negeren
-  p.name=name.slice(0,24);
+  renamingId=id;
+  const inp=$('#nameModalInput');
+  inp.value=p.name;
+  inp.placeholder=t('namePrompt');
+  $('#nameModal').classList.remove('hidden');
+  inp.focus();inp.select();
+}
+function closeNameModal(){
+  renamingId=null;
+  $('#nameModal').classList.add('hidden');
+}
+function saveNameModal(){
+  const p=people.find(x=>x.id===renamingId);
+  const inp=$('#nameModalInput');
+  const name=(inp.value||'').trim().slice(0,24);
+  if(!p||!name){closeNameModal();return;}
+  // Dubbele naam? Even kort markeren en niet opslaan.
+  if(people.some(x=>x.id!==p.id&&x.name.toLowerCase()===name.toLowerCase())){
+    inp.style.boxShadow='3px 3px 0 var(--coral)';
+    setTimeout(()=>inp.style.boxShadow='',500);return;
+  }
+  p.name=name;
+  closeNameModal();
   save();renderAll();
 }
 
@@ -876,9 +903,7 @@ function addExpense(){
   const payerId=parseInt($('#expPayer').value);
   if(!amount||amount<=0){flash('#expAmt');return;}
   if(!payerId)return;
-  const date=$('#expDate').value||'';           // ISO 'YYYY-MM-DD' of leeg
-  const cat=$('#expCat').value.trim();
-  let data={what,amount,payerId,date,cat,split:splitMode,shareIds:[],custom:null};
+  let data={what,amount,payerId,split:splitMode,shareIds:[],custom:null};
   if(splitMode==='some'){
     data.shareIds=[...document.querySelectorAll('#shareChecks input:checked')].map(c=>parseInt(c.value));
     if(!data.shareIds.length){flash('#shareChecks');return;}
@@ -900,8 +925,7 @@ function addExpense(){
   }else{
     expenses.push({id:++eid,...data});
   }
-  $('#expWhat').value='';$('#expAmt').value='';$('#expCat').value='';
-  $('#expDate').value=todayISO();
+  $('#expWhat').value='';$('#expAmt').value='';
   setMode('all');
   save();renderAll();$('#expWhat').focus();
 }
@@ -911,8 +935,6 @@ function startEdit(id){
   editingId=id;
   $('#expWhat').value=e.what;
   $('#expAmt').value=e.amount;
-  $('#expDate').value=e.date||'';
-  $('#expCat').value=e.cat||'';
   renderPayerOptions();            // (re)build options so we can select the payer
   $('#expPayer').value=e.payerId;
   setMode(e.split);
@@ -931,26 +953,10 @@ function stopEdit(){
   $('#cancelEdit').style.display='none';
 }
 function cancelEdit(){
-  $('#expWhat').value='';$('#expAmt').value='';$('#expCat').value='';
-  $('#expDate').value=todayISO();
+  $('#expWhat').value='';$('#expAmt').value='';
   setMode('all');stopEdit();renderAll();
 }
 function flash(sel){const el=$(sel);el.style.boxShadow='3px 3px 0 var(--coral)';setTimeout(()=>el.style.boxShadow='',500);}
-
-/* ---------- Datum-helpers ---------- */
-function todayISO(){
-  const d=new Date();const p=n=>String(n).padStart(2,'0');
-  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
-}
-// Toon een ISO-datum kort en in de juiste taal (bijv. '7 jul').
-function fmtDate(iso){
-  if(!iso)return '';
-  const parts=iso.split('-');if(parts.length!==3)return '';
-  const d=new Date(+parts[0],+parts[1]-1,+parts[2]);
-  if(isNaN(d))return '';
-  try{return d.toLocaleDateString(LOCALES[lang]||'nl-NL',{day:'numeric',month:'short'});}
-  catch(e){return iso;}
-}
 
 /* ---------- Expense list ---------- */
 function renderExpenses(){
@@ -978,17 +984,12 @@ function renderExpenses(){
     const controls=readOnly?'':`
         <button class="del edit" title="${t('edit')}">✏️</button>
         <button class="del rm" title="${t('remove')}">🗑️</button>`;
-    const tags=[];
-    if(e.date)tags.push(`<span class="tag-pill">📅 ${escapeHtml(fmtDate(e.date))}</span>`);
-    if(e.cat)tags.push(`<span class="tag-pill">🏷️ ${escapeHtml(e.cat)}</span>`);
-    const tagRow=tags.length?`<div class="exp-tags">${tags.join('')}</div>`:'';
     d.innerHTML=`
       <div class="exp-top">
         <span class="exp-what">${escapeHtml(e.what)}</span>
         <span class="exp-amt">${euro(e.amount)}</span>${controls}
       </div>
-      <div class="exp-meta">${t('paidBy')} <span class="who">${payer?escapeHtml(payer.name):'?'}</span> · ${split}</div>
-      ${tagRow}`;
+      <div class="exp-meta">${t('paidBy')} <span class="who">${payer?escapeHtml(payer.name):'?'}</span> · ${split}</div>`;
     if(!readOnly){
       d.querySelector('.edit').onclick=()=>startEdit(e.id);
       d.querySelector('.rm').onclick=()=>{
@@ -1089,9 +1090,7 @@ function buildSummary(){
       const nm=people.find(p=>p.id===Number(id))?.name;return nm?nm+' '+euro(v):null;
     }).filter(Boolean).join(', ');
     else who=sharersOf(e).map(id=>people.find(p=>p.id===id)?.name).filter(Boolean).join(', ');
-    const extra=[e.date?fmtDate(e.date):'',e.cat||''].filter(Boolean).join(', ');
-    const what=extra?`${e.what} [${extra}]`:e.what;
-    L.push(t('sumLine',{what,amt:euro(e.amount),payer:payer?payer.name:'?',who}));
+    L.push(t('sumLine',{what:e.what,amt:euro(e.amount),payer:payer?payer.name:'?',who}));
   });
   L.push('');
   L.push(t('sumWhoPays'));
@@ -1152,6 +1151,16 @@ $('#makeCopy').onclick=makeEditableCopy;
 $('#tgAll').onclick=()=>setMode('all');
 $('#tgSome').onclick=()=>setMode('some');
 $('#tgCustom').onclick=()=>setMode('custom');
+// Naam-modal
+$('#nameModalSave').onclick=saveNameModal;
+$('#nameModalCancel').onclick=closeNameModal;
+$('#nameModalInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter')saveNameModal();
+  else if(e.key==='Escape')closeNameModal();
+});
+$('#nameModal').addEventListener('click',e=>{
+  if(e.target.id==='nameModal')closeNameModal(); // klik op de achtergrond sluit
+});
 
 /* ---------- Persistentie (localStorage) ---------- */
 function save(){
@@ -1179,8 +1188,6 @@ function normalize(d){
     return{
       id:e.id,what:String(e.what||'Uitgave'),
       amount:Number(e.amount)||0,payerId:e.payerId,
-      date:typeof e.date==='string'?e.date:'',
-      cat:typeof e.cat==='string'?e.cat:'',
       split,
       shareIds:Array.isArray(e.shareIds)?e.shareIds:[],
       custom:e.custom&&typeof e.custom==='object'?e.custom:null
@@ -1194,7 +1201,7 @@ function normalize(d){
 function buildShareUrl(){
   const payload={
     p:people.map(p=>[p.id,p.name,p.color]),
-    e:expenses.map(x=>[x.id,x.what,x.amount,x.payerId,x.split,x.shareIds||[],x.custom||0,x.date||'',x.cat||''])
+    e:expenses.map(x=>[x.id,x.what,x.amount,x.payerId,x.split,x.shareIds||[],x.custom||0])
   };
   const json=JSON.stringify(payload);
   const b64=btoa(unescape(encodeURIComponent(json)));
@@ -1206,8 +1213,7 @@ function parseShareData(b64){
   const people=(d.p||[]).map(a=>({id:a[0],name:a[1],color:a[2]}));
   const expenses=(d.e||[]).map(a=>({
     id:a[0],what:a[1],amount:a[2],payerId:a[3],
-    split:a[4],shareIds:a[5]||[],custom:a[6]||null,
-    date:a[7]||'',cat:a[8]||''
+    split:a[4],shareIds:a[5]||[],custom:a[6]||null
   }));
   return{people,expenses};
 }
@@ -1313,12 +1319,6 @@ function applyStaticI18n(){
   // Vlag in de taalknop
   const cur=LANGS.find(l=>l.code===lang);
   $('#langFlag').textContent=cur?cur.flag:'🌐';
-  // Categorie-suggesties in de juiste taal
-  const dl=$('#catList');
-  if(dl){
-    const opts=I18N[lang]&&I18N[lang].catSuggestions||I18N.en.catSuggestions||[];
-    dl.innerHTML=opts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}"></option>`).join('');
-  }
 }
 function buildLangMenu(){
   const menu=$('#langMenu');
@@ -1361,7 +1361,6 @@ function initLang(){
 (function init(){
   initLang();
   applyStaticI18n();
-  $('#expDate').value=todayISO(); // standaard: vandaag
   const m=location.hash.match(/^#s=(.+)$/);
   if(m){
     try{

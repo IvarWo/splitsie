@@ -10,7 +10,6 @@ Geen server, geen account, geen tracking. Alles draait lokaal in de browser.
 - **Uitgaven invoeren** per persoon: wat, hoeveel, en door wie betaald.
 - **Slim delen:** kies per uitgave of *iedereen* meedeelt, *bepaalde mensen*, of geef *eigen bedragen* per persoon op (met een live-check dat de bedragen precies optellen tot het totaal). Voeg je later een nieuw persoon toe, dan gaat die automatisch meedelen in alle "iedereen"-uitgaven.
 - **Uitgaven bewerken:** klik op ✏️ bij een uitgave om bedrag, betaler of verdeling achteraf aan te passen.
-- **Datum & categorie:** geef per uitgave optioneel een datum (standaard vandaag) en een categorie op. Ze verschijnen als labels in de lijst en in het gedeelde overzicht.
 - **Namen bewerken:** klik op ✏️ bij een naam om die aan te passen zonder de persoon of z'n uitgaven te verliezen.
 - **Automatische afrekening:** balans per persoon + de minimale set overboekingen om iedereen gelijk te trekken.
 - **Wordt automatisch bewaard:** je afrekening blijft in je browser staan, ook na het sluiten van het tabblad. Met de knop "Alles wissen" begin je opnieuw.
