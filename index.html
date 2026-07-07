@@ -361,7 +361,7 @@ function removePerson(id){
 function renderPeople(){
   const box=$('#peopleList');
   box.innerHTML='';
-  if(!people.length){box.innerHTML='<div class="empty" style="width:100%">Nog niemand toegevoegd — begin hierboven 👆</div>';return;}
+  if(!people.length){box.innerHTML='<div class="empty" style="width:100%">Nog niemand toegevoegd — begin hieronder 👇</div>';return;}
   people.forEach(p=>{
     const c=document.createElement('div');c.className='chip';
     c.innerHTML=`<span class="av" style="background:${p.color}">${initials(p.name)}</span>${escapeHtml(p.name)}<button title="Verwijderen">✕</button>`;
