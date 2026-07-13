@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<!-- QR-code generator (klein, geen afhankelijkheden). Faalt hij te laden, dan verbergen we de QR-knop. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --ink:#2b2a3d;
@@ -272,6 +274,26 @@
     .modal-overlay,.modal-box{animation:none}
   }
 
+  /* QR-modal */
+  .modal-box.qr{text-align:center}
+  .qr-holder{
+    display:inline-block;margin:4px auto 0;padding:12px;
+    background:#fff;border:2.5px solid var(--ink);border-radius:14px;line-height:0;
+  }
+  .qr-holder img,.qr-holder canvas{display:block}
+  .qr-hint{font-size:14px;font-weight:600;color:var(--muted);margin-top:14px}
+
+  /* Confetti */
+  .confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden}
+  .confetti-bit{
+    position:absolute;top:-20px;border-radius:2px;
+    animation:confettiFall linear forwards;
+  }
+  @keyframes confettiFall{
+    0%{transform:translateY(-20px) rotate(0);opacity:1}
+    100%{transform:translateY(105vh) rotate(720deg);opacity:.9}
+  }
+
   /* ---------- text link button ---------- */
   .linklike{
     display:block;margin:14px auto 0;background:none;border:none;cursor:pointer;
@@ -294,7 +316,8 @@
     display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:2px dashed var(--line);
   }
   .bal:last-child{border-bottom:none}
-  .bal .nm{font-weight:800;flex:1}
+  .bal .nm{font-weight:800;flex:1;display:flex;flex-direction:column;gap:1px}
+  .bal .bal-spent{font-weight:700;font-size:12.5px;color:var(--muted-soft)}
   .bal .amt{font-family:'Fredoka';font-weight:600;font-size:17px}
   .pos{color:var(--mint-deep)}
   .neg{color:var(--coral)}
@@ -493,6 +516,7 @@
     <div class="add-row results-actions" style="margin-top:8px">
       <button class="btn grape" id="copySummary" style="flex:1" data-i18n="copySummary">📋 Kopieer overzicht</button>
       <button class="btn mint" id="shareLink" style="flex:1" data-i18n="shareLinkMobile">🔗 Deel via link</button>
+      <button class="btn lemon" id="qrBtn" style="flex:1" data-i18n="qrBtn">📷 QR-code</button>
     </div>
     <p class="note" data-i18n="note">💡 Splitsie verstuurt zelf niks en slaat niks op een server op. Het overzicht en de link deel je zelf via bijv. WhatsApp.</p>
   </section>
@@ -510,6 +534,18 @@
     <div class="modal-actions">
       <button class="btn" id="nameModalCancel" data-i18n="cancel">Annuleren</button>
       <button class="btn mint" id="nameModalSave" data-i18n="modalSave">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR-code (modal) -->
+<div class="modal-overlay hidden" id="qrModal">
+  <div class="modal-box qr" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+    <h3 id="qrModalTitle" data-i18n="qrTitle">Scan om te openen</h3>
+    <div class="qr-holder" id="qrHolder"></div>
+    <p class="qr-hint" data-i18n="qrHint">Laat anderen deze code scannen om de afrekening te openen.</p>
+    <div class="modal-actions">
+      <button class="btn mint" id="qrClose" data-i18n="close" style="flex:1">Sluiten</button>
     </div>
   </div>
 </div>
@@ -565,7 +601,8 @@ const I18N={
     distributed:'Verdeeld: {sum} / {goal}',splitEven:'Gelijk verdelen',
     expEmpty:'Nog geen uitgaven. Voeg er hierboven eentje toe 🧾',
     expCountOne:'{n} uitgave · samen <b>{total}</b>',expCountMany:'{n} uitgaven · samen <b>{total}</b>',
-    edit:'Bewerken',remove:'Verwijderen',
+    edit:'Bewerken',remove:'Verwijderen',duplicate:'Dupliceren',
+    spentLabel:'gaf {amt} uit',qrBtn:'📷 QR-code',qrTitle:'Scan om te openen',qrHint:'Laat anderen deze code scannen om de afrekening te openen.',close:'Sluiten',
     paidBy:'Betaald door',sharedAll:'gedeeld door iedereen',customLabel:'eigen bedragen —',forWhom:'voor',
     needMore:'Voeg mensen en uitgaven toe om de afrekening te zien.',
     total:'Totaal',persons:'Personen',avgPP:'Gem. p.p.',
@@ -603,7 +640,8 @@ const I18N={
     distributed:'Divided: {sum} / {goal}',splitEven:'Split evenly',
     expEmpty:'No expenses yet. Add one above 🧾',
     expCountOne:'{n} expense · {total} total',expCountMany:'{n} expenses · {total} total',
-    edit:'Edit',remove:'Delete',
+    edit:'Edit',remove:'Delete',duplicate:'Duplicate',
+    spentLabel:'spent {amt}',qrBtn:'📷 QR code',qrTitle:'Scan to open',qrHint:'Let others scan this code to open the tally.',close:'Close',
     paidBy:'Paid by',sharedAll:'shared by everyone',customLabel:'custom amounts —',forWhom:'for',
     needMore:'Add people and expenses to see the settlement.',
     total:'Total',persons:'People',avgPP:'Avg. pp',
@@ -641,7 +679,8 @@ const I18N={
     distributed:'Réparti : {sum} / {goal}',splitEven:'Répartir également',
     expEmpty:'Aucune dépense. Ajoutez-en une ci-dessus 🧾',
     expCountOne:'{n} dépense · {total} au total',expCountMany:'{n} dépenses · {total} au total',
-    edit:'Modifier',remove:'Supprimer',
+    edit:'Modifier',remove:'Supprimer',duplicate:'Dupliquer',
+    spentLabel:'a payé {amt}',qrBtn:'📷 QR code',qrTitle:'Scanner pour ouvrir',qrHint:'Laissez les autres scanner ce code pour ouvrir le décompte.',close:'Fermer',
     paidBy:'Payé par',sharedAll:'partagé par tout le monde',customLabel:'montants personnalisés —',forWhom:'pour',
     needMore:'Ajoutez des personnes et des dépenses pour voir le décompte.',
     total:'Total',persons:'Personnes',avgPP:'Moy. /pers.',
@@ -679,7 +718,8 @@ const I18N={
     distributed:'Verteilt: {sum} / {goal}',splitEven:'Gleich verteilen',
     expEmpty:'Noch keine Ausgaben. Füge oben eine hinzu 🧾',
     expCountOne:'{n} Ausgabe · zusammen {total}',expCountMany:'{n} Ausgaben · zusammen {total}',
-    edit:'Bearbeiten',remove:'Löschen',
+    edit:'Bearbeiten',remove:'Löschen',duplicate:'Duplizieren',
+    spentLabel:'zahlte {amt}',qrBtn:'📷 QR-Code',qrTitle:'Zum Öffnen scannen',qrHint:'Lass andere diesen Code scannen, um die Abrechnung zu öffnen.',close:'Schließen',
     paidBy:'Bezahlt von',sharedAll:'von allen geteilt',customLabel:'eigene Beträge —',forWhom:'für',
     needMore:'Füge Personen und Ausgaben hinzu, um die Abrechnung zu sehen.',
     total:'Gesamt',persons:'Personen',avgPP:'Ø pro Person',
@@ -717,7 +757,8 @@ const I18N={
     distributed:'Repartido: {sum} / {goal}',splitEven:'Repartir por igual',
     expEmpty:'Aún no hay gastos. Añade uno arriba 🧾',
     expCountOne:'{n} gasto · {total} en total',expCountMany:'{n} gastos · {total} en total',
-    edit:'Editar',remove:'Eliminar',
+    edit:'Editar',remove:'Eliminar',duplicate:'Duplicar',
+    spentLabel:'pagó {amt}',qrBtn:'📷 Código QR',qrTitle:'Escanea para abrir',qrHint:'Deja que otros escaneen este código para abrir la cuenta.',close:'Cerrar',
     paidBy:'Pagado por',sharedAll:'compartido por todos',customLabel:'importes propios —',forWhom:'para',
     needMore:'Añade personas y gastos para ver la liquidación.',
     total:'Total',persons:'Personas',avgPP:'Media p.p.',
@@ -755,7 +796,8 @@ const I18N={
     distributed:'已分配：{sum} / {goal}',splitEven:'平均分配',
     expEmpty:'还没有支出。在上面添加一笔吧 🧾',
     expCountOne:'{n} 笔支出 · 共 {total}',expCountMany:'{n} 笔支出 · 共 {total}',
-    edit:'编辑',remove:'删除',
+    edit:'编辑',remove:'删除',duplicate:'复制',
+    spentLabel:'支付了 {amt}',qrBtn:'📷 二维码',qrTitle:'扫码打开',qrHint:'让别人扫描此二维码即可打开账单。',close:'关闭',
     paidBy:'付款人',sharedAll:'所有人分摊',customLabel:'自定义金额 —',forWhom:'给',
     needMore:'添加人员和支出即可查看结算。',
     total:'总计',persons:'人数',avgPP:'人均',
@@ -787,6 +829,16 @@ function sharersOf(e){
 }
 
 /* ---------- People ---------- */
+// Voeg een persoon toe (of geef de bestaande met dezelfde naam terug). Retourneert de persoon, of null bij lege naam.
+function commitPersonName(name){
+  name=(name||'').trim().slice(0,24);
+  if(!name)return null;
+  const existing=people.find(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(existing)return existing;
+  const p={id:++pid,name,color:AVATAR_COLORS[people.length%AVATAR_COLORS.length]};
+  people.push(p);
+  return p;
+}
 function addPerson(){
   const inp=$('#personName');
   const name=inp.value.trim();
@@ -795,7 +847,7 @@ function addPerson(){
     inp.style.boxShadow='3px 3px 0 var(--coral)';
     setTimeout(()=>inp.style.boxShadow='',500);return;
   }
-  people.push({id:++pid,name,color:AVATAR_COLORS[people.length%AVATAR_COLORS.length]});
+  commitPersonName(name);
   inp.value='';inp.focus();
   save();renderAll();
 }
@@ -964,6 +1016,14 @@ function setMode(mode){
   if(mode==='custom')updateCustomTally();
 }
 function addExpense(){
+  // Openstaande naam in het naamveld alsnog meenemen (voorkomt 'vergeten toe te voegen').
+  const pendingName=$('#personName').value.trim();
+  if(pendingName){
+    const p=commitPersonName(pendingName);
+    $('#personName').value='';
+    if(p&&!editingId&&!selectedPayerId)selectedPayerId=p.id;
+    renderPayerOptions();
+  }
   const what=$('#expWhat').value.trim()||t('whatPlaceholder').split(',')[0];
   const amount=parseFloat($('#expAmt').value);
   const payerId=payerValue();
@@ -989,7 +1049,7 @@ function addExpense(){
     if(e)Object.assign(e,data);
     stopEdit();
   }else{
-    expenses.push({id:++eid,...data});
+    expenses.unshift({id:++eid,...data}); // nieuwste bovenaan
   }
   $('#expWhat').value='';$('#expAmt').value='';
   setMode('all');
@@ -1048,6 +1108,7 @@ function renderExpenses(){
       split=t('customLabel')+' <span class="who">'+escapeHtml(parts)+'</span>';
     }else split=t('forWhom')+' <span class="who">'+escapeHtml(names)+'</span>';
     const controls=readOnly?'':`
+        <button class="del dup" title="${t('duplicate')}">📄</button>
         <button class="del edit" title="${t('edit')}">✏️</button>
         <button class="del rm" title="${t('remove')}">🗑️</button>`;
     d.innerHTML=`
@@ -1057,6 +1118,7 @@ function renderExpenses(){
       </div>
       <div class="exp-meta">${t('paidBy')} <span class="who">${payer?escapeHtml(payer.name):'?'}</span> · ${split}</div>`;
     if(!readOnly){
+      d.querySelector('.dup').onclick=()=>duplicateExpense(e.id);
       d.querySelector('.edit').onclick=()=>startEdit(e.id);
       d.querySelector('.rm').onclick=()=>{
         if(e.id===editingId)cancelEdit();
@@ -1066,24 +1128,53 @@ function renderExpenses(){
     box.appendChild(d);
   });
 }
+function duplicateExpense(id){
+  const e=expenses.find(x=>x.id===id);
+  if(!e)return;
+  const copy=JSON.parse(JSON.stringify(e)); // diepe kopie (ook custom-object)
+  copy.id=++eid;
+  const idx=expenses.findIndex(x=>x.id===id);
+  expenses.splice(idx,0,copy); // vlak boven het origineel invoegen
+  save();renderAll();
+}
 
 /* ---------- Settlement math ---------- */
-function computeBalances(){
+// Alles in hele centen zodat er nooit halve centen zoekraken.
+// Bij gelijk delen krijgen de eerste personen 1 cent extra tot het klopt.
+function computeBalancesCents(){
   const bal={};people.forEach(p=>bal[p.id]=0);
   expenses.forEach(e=>{
-    if(bal[e.payerId]!==undefined)bal[e.payerId]+=e.amount;
+    const cents=Math.round(e.amount*100);
+    if(bal[e.payerId]!==undefined)bal[e.payerId]+=cents;
     if(e.split==='custom'){
       Object.entries(e.custom||{}).forEach(([id,v])=>{
-        const pid=Number(id);if(bal[pid]!==undefined)bal[pid]-=v;
+        const pid=Number(id);if(bal[pid]!==undefined)bal[pid]-=Math.round(v*100);
       });
     }else{
       const shareIds=sharersOf(e);
       if(!shareIds.length)return;
-      const share=e.amount/shareIds.length;
-      shareIds.forEach(id=>{if(bal[id]!==undefined)bal[id]-=share;});
+      const n=shareIds.length;
+      const base=Math.floor(cents/n);
+      let rest=cents-base*n; // resterende centen eerlijk toebedelen
+      shareIds.forEach(id=>{
+        let owe=base;
+        if(rest>0){owe+=1;rest--;}
+        if(bal[id]!==undefined)bal[id]-=owe;
+      });
     }
   });
-  return bal;
+  return bal; // in centen (integers)
+}
+function computeBalances(){
+  const c=computeBalancesCents();
+  const bal={};Object.keys(c).forEach(k=>bal[k]=c[k]/100);
+  return bal; // in euro's
+}
+// Totaal dat elke persoon heeft voorgeschoten (betaald).
+function spentByPerson(){
+  const s={};people.forEach(p=>s[p.id]=0);
+  expenses.forEach(e=>{if(s[e.payerId]!==undefined)s[e.payerId]+=e.amount;});
+  return s;
 }
 function minimizeTransfers(bal){
   const creditors=[],debtors=[];
@@ -1118,15 +1209,22 @@ function renderResults(){
     <div class="stat"><div class="n">${euro(perHead)}</div><div class="l">${t('avgPP')}</div></div>`;
 
   const bal=computeBalances();
+  const spent=spentByPerson();
   balBox.innerHTML=people.map(p=>{
     const v=bal[p.id];const cls=v>0.005?'pos':v<-0.005?'neg':'';
     const av=`<span class="av" style="background:${p.color};width:26px;height:26px;display:grid;place-items:center;border-radius:50%;color:#fff;font-family:Fredoka;font-size:13px">${initials(p.name)}</span>`;
     const txt=v>0.005?t('getsBack'):v<-0.005?t('owes'):t('even');
-    return `<div class="bal">${av}<span class="nm">${escapeHtml(p.name)}</span><span style="color:var(--muted);font-weight:700;font-size:14px">${txt}</span><span class="amt ${cls}">${euro(Math.abs(v))}</span></div>`;
+    const spentLine=`<span class="bal-spent">${t('spentLabel',{amt:euro(spent[p.id]||0)})}</span>`;
+    return `<div class="bal">${av}<span class="nm">${escapeHtml(p.name)}${spentLine}</span><span style="color:var(--muted);font-weight:700;font-size:14px">${txt}</span><span class="amt ${cls}">${euro(Math.abs(v))}</span></div>`;
   }).join('');
 
   const tx=minimizeTransfers(bal);
-  if(!tx.length){setBox.innerHTML='<div class="allset">'+t('allEven')+'</div>';return;}
+  if(!tx.length){
+    setBox.innerHTML='<div class="allset">'+t('allEven')+'</div>';
+    maybeCelebrate();
+    return;
+  }
+  wasEven=false; // niet (meer) gelijk → volgende gelijkstand mag weer confetti geven
   setBox.innerHTML=tx.map(transfer=>{
     const from=people.find(p=>p.id===transfer.from),to=people.find(p=>p.id===transfer.to);
     return `<div class="settle">
@@ -1134,6 +1232,12 @@ function renderResults(){
       <span class="amount">${euro(transfer.amt)}</span>
     </div>`;
   }).join('');
+}
+// Confetti alleen bij de overgang naar 'iedereen gelijk', niet bij elke render.
+let wasEven=false;
+function maybeCelebrate(){
+  if(!wasEven)launchConfetti();
+  wasEven=true;
 }
 
 /* ---------- Copy summary ---------- */
@@ -1195,12 +1299,15 @@ function updateFormState(){
   $('#addExpense').disabled=!ok;
   $('#expWhat').disabled=!ok;$('#expAmt').disabled=!ok;$('#payerBtn').disabled=!ok;
   $('#expenseCard').style.opacity=ok?'1':'.55';
-  // Kopieer- en deelknop pas actief zodra er iets te delen valt.
+  // Kopieer-, deel- en QR-knop pas actief zodra er iets te delen valt.
   const canShare=people.length>=1&&expenses.length>=1;
-  ['#copySummary','#shareLink'].forEach(sel=>{
-    const b=$(sel);b.disabled=!canShare;
+  ['#copySummary','#shareLink','#qrBtn'].forEach(sel=>{
+    const b=$(sel);if(!b)return;b.disabled=!canShare;
     b.title=canShare?'':t('needExpense');
   });
+  // Zonder QR-library heeft de knop geen zin.
+  const qb=$('#qrBtn');
+  if(qb&&typeof QRCode==='undefined')qb.style.display='none';
 }
 
 /* ---------- events ---------- */
@@ -1235,6 +1342,47 @@ $('#nameModalInput').addEventListener('keydown',e=>{
 $('#nameModal').addEventListener('click',e=>{
   if(e.target.id==='nameModal')closeNameModal(); // klik op de achtergrond sluit
 });
+// QR-modal
+$('#qrBtn').onclick=openQrModal;
+$('#qrClose').onclick=closeQrModal;
+$('#qrModal').addEventListener('click',e=>{if(e.target.id==='qrModal')closeQrModal();});
+
+/* ---------- QR-code ---------- */
+function qrAvailable(){return typeof QRCode!=='undefined';}
+function openQrModal(){
+  if(!people.length||!expenses.length){flash('#qrBtn');return;}
+  if(!qrAvailable()){flash('#qrBtn');return;}
+  const holder=$('#qrHolder');
+  holder.innerHTML='';
+  const url=buildShareUrl();
+  // Donkere QR op lichte achtergrond leest het best, ook in dark mode.
+  new QRCode(holder,{text:url,width:220,height:220,colorDark:'#2b2a3d',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  $('#qrModal').classList.remove('hidden');
+}
+function closeQrModal(){$('#qrModal').classList.add('hidden');}
+
+/* ---------- Confetti (feestje bij gelijkstand) ---------- */
+function launchConfetti(){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const colors=['#8367c7','#ff8a76','#5bbaa8','#78c0e0','#f6a5c0','#ffd166'];
+  const layer=document.createElement('div');
+  layer.className='confetti-layer';
+  document.body.appendChild(layer);
+  const N=90;
+  for(let i=0;i<N;i++){
+    const c=document.createElement('span');
+    c.className='confetti-bit';
+    const size=6+Math.random()*8;
+    c.style.left=Math.random()*100+'vw';
+    c.style.width=size+'px';c.style.height=size*0.6+'px';
+    c.style.background=colors[i%colors.length];
+    c.style.animationDuration=(1.6+Math.random()*1.4)+'s';
+    c.style.animationDelay=(Math.random()*0.4)+'s';
+    c.style.transform='rotate('+(Math.random()*360)+'deg)';
+    layer.appendChild(c);
+  }
+  setTimeout(()=>layer.remove(),3400);
+}
 
 /* ---------- Persistentie (localStorage) ---------- */
 function save(){
