@@ -49,7 +49,7 @@
     --shadow-hard:5px 5px 0 rgba(0,0,0,.55);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
+  html{scroll-behavior:smooth;overflow-x:hidden}
   body{
     font-family:'Nunito',sans-serif;
     background:var(--paper);
@@ -284,7 +284,7 @@
   .qr-hint{font-size:14px;font-weight:600;color:var(--muted);margin-top:14px}
 
   /* Confetti */
-  .confetti-layer{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden}
+  .confetti-layer{position:fixed;inset:0;width:100%;pointer-events:none;z-index:200;overflow:hidden}
   .confetti-bit{
     position:absolute;top:-20px;border-radius:2px;
     animation:confettiFall linear forwards;
@@ -1408,7 +1408,7 @@ function launchConfetti(){
     const c=document.createElement('span');
     c.className='confetti-bit';
     const size=6+Math.random()*8;
-    c.style.left=Math.random()*100+'vw';
+    c.style.left=(Math.random()*96)+'%'; // percentage van de laag (nooit voorbij de rechterrand)
     c.style.width=size+'px';c.style.height=size*0.6+'px';
     c.style.background=colors[i%colors.length];
     c.style.animationDuration=(1.6+Math.random()*1.4)+'s';
