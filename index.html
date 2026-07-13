@@ -127,6 +127,40 @@
   input:focus,select:focus{box-shadow:3px 3px 0 var(--grape);transform:translate(-1px,-1px)}
   input::placeholder{color:var(--faint);font-weight:600}
   .grow{flex:1;min-width:140px}
+
+  /* ---------- Custom dropdown (betaald door) ---------- */
+  .dropdown{position:relative;width:100%}
+  .dd-btn{
+    width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    font-family:'Nunito',sans-serif;font-weight:700;font-size:16px;color:var(--ink);
+    border:2.5px solid var(--ink);border-radius:12px;padding:10px 14px;
+    background:var(--surface);cursor:pointer;text-align:left;
+    transition:box-shadow .12s,transform .12s;
+  }
+  .dd-btn:focus,.dd-btn:hover{box-shadow:3px 3px 0 var(--grape);transform:translate(-1px,-1px);outline:none}
+  .dropdown.open .dd-btn{box-shadow:3px 3px 0 var(--grape)}
+  .dd-current{display:flex;align-items:center;gap:9px;min-width:0}
+  .dd-current .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:'Fredoka';font-size:13px;font-weight:600;flex-shrink:0}
+  .dd-current .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dd-current .empty-txt{color:var(--faint);font-weight:600}
+  .dd-caret{font-size:12px;opacity:.6;transition:transform .15s}
+  .dropdown.open .dd-caret{transform:rotate(180deg)}
+  .dd-menu{
+    position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:40;
+    background:var(--card);border:2.5px solid var(--ink);border-radius:14px;
+    box-shadow:var(--shadow-hard);padding:6px;display:none;
+    max-height:240px;overflow-y:auto;
+  }
+  .dropdown.open .dd-menu{display:block}
+  .dd-opt{
+    display:flex;align-items:center;gap:9px;width:100%;
+    background:none;border:none;cursor:pointer;text-align:left;
+    font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:var(--ink);
+    padding:9px 11px;border-radius:9px;
+  }
+  .dd-opt .av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:'Fredoka';font-size:12px;font-weight:600;flex-shrink:0}
+  .dd-opt:hover{background:var(--paper)}
+  .dd-opt.sel{background:var(--mint);color:var(--on-accent)}
   button.btn{
     font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;cursor:pointer;
     color:var(--on-accent);
@@ -415,7 +449,13 @@
       </div>
       <div class="field grow" style="margin-bottom:0">
         <label data-i18n="payerLabel">Betaald door</label>
-        <select id="expPayer" style="width:100%"></select>
+        <div class="dropdown" id="payerDropdown">
+          <button type="button" class="dd-btn" id="payerBtn" aria-haspopup="listbox" aria-expanded="false">
+            <span class="dd-current" id="payerCurrent"></span>
+            <span class="dd-caret">▾</span>
+          </button>
+          <div class="dd-menu" id="payerMenu" role="listbox"></div>
+        </div>
       </div>
     </div>
 
@@ -813,14 +853,40 @@ function saveNameModal(){
 }
 
 /* ---------- Expense form ---------- */
+let selectedPayerId=null; // id van de gekozen betaler
+function payerValue(){return selectedPayerId;}
 function renderPayerOptions(){
-  const sel=$('#expPayer');
-  const cur=sel.value;
-  sel.innerHTML=people.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
-  // behoud selectie bij re-render (bijv. tijdens bewerken)
-  if(editingId){const e=expenses.find(x=>x.id===editingId);if(e)sel.value=e.payerId;}
-  else if(cur&&people.some(p=>String(p.id)===cur))sel.value=cur;
+  // Geldige selectie behouden; anders eerste persoon kiezen.
+  if(editingId){
+    const e=expenses.find(x=>x.id===editingId);
+    if(e)selectedPayerId=e.payerId;
+  }
+  if(!people.some(p=>p.id===selectedPayerId)){
+    selectedPayerId=people.length?people[0].id:null;
+  }
+  // Knop-inhoud (huidige keuze)
+  const cur=people.find(p=>p.id===selectedPayerId);
+  const btn=$('#payerCurrent');
+  if(btn){
+    btn.innerHTML=cur
+      ? `<span class="av" style="background:${cur.color}">${initials(cur.name)}</span><span class="nm">${escapeHtml(cur.name)}</span>`
+      : `<span class="empty-txt">—</span>`;
+  }
+  // Menu-opties
+  const menu=$('#payerMenu');
+  if(menu){
+    menu.innerHTML=people.map(p=>
+      `<button type="button" class="dd-opt${p.id===selectedPayerId?' sel':''}" role="option" data-pid="${p.id}">`+
+      `<span class="av" style="background:${p.color}">${initials(p.name)}</span>`+
+      `<span class="nm">${escapeHtml(p.name)}</span></button>`
+    ).join('');
+    menu.querySelectorAll('.dd-opt').forEach(o=>{
+      o.onclick=()=>{selectedPayerId=parseInt(o.dataset.pid);closePayerMenu();renderPayerOptions();};
+    });
+  }
 }
+function openPayerMenu(){if(!people.length)return;$('#payerDropdown').classList.add('open');$('#payerBtn').setAttribute('aria-expanded','true');}
+function closePayerMenu(){$('#payerDropdown').classList.remove('open');$('#payerBtn').setAttribute('aria-expanded','false');}
 function renderShareChecks(){
   const box=$('#shareChecks');
   // Bij bewerken van een "sommige"-uitgave: vink de opgeslagen personen aan; anders standaard alles aan.
@@ -900,7 +966,7 @@ function setMode(mode){
 function addExpense(){
   const what=$('#expWhat').value.trim()||t('whatPlaceholder').split(',')[0];
   const amount=parseFloat($('#expAmt').value);
-  const payerId=parseInt($('#expPayer').value);
+  const payerId=payerValue();
   if(!amount||amount<=0){flash('#expAmt');return;}
   if(!payerId)return;
   let data={what,amount,payerId,split:splitMode,shareIds:[],custom:null};
@@ -935,8 +1001,8 @@ function startEdit(id){
   editingId=id;
   $('#expWhat').value=e.what;
   $('#expAmt').value=e.amount;
-  renderPayerOptions();            // (re)build options so we can select the payer
-  $('#expPayer').value=e.payerId;
+  selectedPayerId=e.payerId;
+  renderPayerOptions();            // (re)build options + toon de gekozen betaler
   setMode(e.split);
   renderShareChecks();
   renderCustomSplit();
@@ -1127,7 +1193,7 @@ function renderAll(){renderPeople();renderPayerOptions();renderShareChecks();ren
 function updateFormState(){
   const ok=people.length>=1;
   $('#addExpense').disabled=!ok;
-  $('#expWhat').disabled=!ok;$('#expAmt').disabled=!ok;$('#expPayer').disabled=!ok;
+  $('#expWhat').disabled=!ok;$('#expAmt').disabled=!ok;$('#payerBtn').disabled=!ok;
   $('#expenseCard').style.opacity=ok?'1':'.55';
   // Kopieer- en deelknop pas actief zodra er iets te delen valt.
   const canShare=people.length>=1&&expenses.length>=1;
@@ -1151,6 +1217,14 @@ $('#makeCopy').onclick=makeEditableCopy;
 $('#tgAll').onclick=()=>setMode('all');
 $('#tgSome').onclick=()=>setMode('some');
 $('#tgCustom').onclick=()=>setMode('custom');
+// Betaald-door dropdown
+$('#payerBtn').onclick=e=>{
+  e.stopPropagation();
+  $('#payerDropdown').classList.contains('open')?closePayerMenu():openPayerMenu();
+};
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#payerDropdown'))closePayerMenu();
+});
 // Naam-modal
 $('#nameModalSave').onclick=saveNameModal;
 $('#nameModalCancel').onclick=closeNameModal;
