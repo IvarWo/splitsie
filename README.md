@@ -11,7 +11,7 @@ Geen server, geen account, geen tracking. Alles draait lokaal in de browser.
 - **Slim delen:** kies per uitgave of *iedereen* meedeelt, *bepaalde mensen*, of geef *eigen bedragen* per persoon op (met een live-check dat de bedragen precies optellen tot het totaal). Voeg je later een nieuw persoon toe, dan gaat die automatisch meedelen in alle "iedereen"-uitgaven.
 - **Uitgaven bewerken:** klik op ✏️ bij een uitgave om bedrag, betaler of verdeling achteraf aan te passen, of op 📄 om een uitgave te dupliceren (handig bij terugkerende kosten). Nieuwste uitgaven staan bovenaan.
 - **Namen bewerken:** klik op ✏️ bij een naam om die aan te passen zonder de persoon of z'n uitgaven te verliezen.
-- **Automatische afrekening:** balans per persoon (inclusief hoeveel ieder in totaal voorschoot) + de minimale set overboekingen om iedereen gelijk te trekken. Restcentjes worden eerlijk verdeeld, zodat de rekening tot op de cent klopt.
+- **Automatische afrekening:** balans per persoon (inclusief hoeveel ieder in totaal voorschoot) + de minimale set overboekingen om iedereen gelijk te trekken. Deelt een bedrag niet rond op (bijv. €10 door 3), dan komt de losse restcent voor rekening van wie de uitgave betaalde; dat wordt in de afrekening kort toegelicht.
 - **QR-code:** toon een QR-code van de deel-link, zodat mensen aan tafel 'm zo kunnen scannen.
 - **Wordt automatisch bewaard:** je afrekening blijft in je browser staan, ook na het sluiten van het tabblad. Met de knop "Alles wissen" begin je opnieuw.
 - **Delen via link:** de knop "Deel via link" maakt een link met je hele afrekening erin (zonder server). Wie die opent ziet een alleen-lezen weergave en kan er met één klik een eigen bewerkbare kopie van maken.
