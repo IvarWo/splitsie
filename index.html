@@ -1143,26 +1143,39 @@ function duplicateExpense(id){
 // Alles in hele centen zodat er nooit halve centen zoekraken.
 // Bij gelijk delen krijgen de eerste personen 1 cent extra tot het klopt.
 function computeBalancesCents(){
-  const bal={};people.forEach(p=>bal[p.id]=0);
+  // Optie A: reken eerst exact (met breuken van centen) over ALLE uitgaven samen,
+  // en rond pas de eindbalans per persoon af. Zo stapelen afrondingen per los
+  // bonnetje niet op. Een eventueel resterend centje komt bij de betaler terecht.
+  const exact={};people.forEach(p=>exact[p.id]=0); // exacte balans in centen (mag fractioneel)
   expenses.forEach(e=>{
     const cents=Math.round(e.amount*100);
-    if(bal[e.payerId]!==undefined)bal[e.payerId]+=cents;
+    if(exact[e.payerId]!==undefined)exact[e.payerId]+=cents;
     if(e.split==='custom'){
       Object.entries(e.custom||{}).forEach(([id,v])=>{
-        const pid=Number(id);if(bal[pid]!==undefined)bal[pid]-=Math.round(v*100);
+        const pid=Number(id);if(exact[pid]!==undefined)exact[pid]-=Math.round(v*100);
       });
     }else{
       const shareIds=sharersOf(e);
       if(!shareIds.length)return;
-      const n=shareIds.length;
-      const base=Math.floor(cents/n);   // ieders aandeel, naar beneden afgerond
-      const rest=cents-base*n;           // overgebleven cent(en)
-      shareIds.forEach(id=>{if(bal[id]!==undefined)bal[id]-=base;});
-      // De losse restcent(en) komen volledig voor rekening van de betaler.
-      if(rest>0&&bal[e.payerId]!==undefined)bal[e.payerId]-=rest;
+      const share=cents/shareIds.length; // exact aandeel (kan fractioneel zijn)
+      shareIds.forEach(id=>{if(exact[id]!==undefined)exact[id]-=share;});
     }
   });
-  return bal; // in centen (integers)
+  // Eindbalans per persoon afronden op hele centen.
+  const bal={};let residual=0;
+  people.forEach(p=>{
+    const r=Math.round(exact[p.id]);
+    bal[p.id]=r;
+    residual+=r;
+  });
+  // Door afronden kan de som net van 0 afwijken (± een paar cent).
+  // Leg dat verschil bij de persoon die het meest heeft voorgeschoten (grootste crediteur).
+  if(residual!==0){
+    let top=null;
+    people.forEach(p=>{if(top===null||bal[p.id]>bal[top])top=p.id;});
+    if(top!==null)bal[top]-=residual;
+  }
+  return bal; // in centen (integers), som = 0
 }
 function computeBalances(){
   const c=computeBalancesCents();
@@ -1235,14 +1248,25 @@ function renderResults(){
   const note=hasRoundingRemainder()?`<p class="cent-note">${t('centNote')}</p>`:'';
   setBox.innerHTML=rows+note;
 }
-// Is er bij een gelijk-verdeelde uitgave een cent overgebleven (die de betaler draagt)?
+// Toont de toelichting alleen als de eindafrekening daadwerkelijk een cent moest afronden.
 function hasRoundingRemainder(){
-  return expenses.some(e=>{
-    if(e.split==='custom')return false;
-    const shareIds=sharersOf(e);
-    if(shareIds.length<2)return false;
-    return Math.round(e.amount*100)%shareIds.length!==0;
+  const exact={};people.forEach(p=>exact[p.id]=0);
+  expenses.forEach(e=>{
+    const cents=Math.round(e.amount*100);
+    if(exact[e.payerId]!==undefined)exact[e.payerId]+=cents;
+    if(e.split==='custom'){
+      Object.entries(e.custom||{}).forEach(([id,v])=>{
+        const pid=Number(id);if(exact[pid]!==undefined)exact[pid]-=Math.round(v*100);
+      });
+    }else{
+      const shareIds=sharersOf(e);
+      if(!shareIds.length)return;
+      const share=cents/shareIds.length;
+      shareIds.forEach(id=>{if(exact[id]!==undefined)exact[id]-=share;});
+    }
   });
+  // Is een van de exacte balansen geen heel aantal centen? Dan is er afgerond.
+  return people.some(p=>Math.abs(exact[p.id]-Math.round(exact[p.id]))>1e-9);
 }
 // Confetti alleen bij de overgang naar 'iedereen gelijk', niet bij elke render.
 let wasEven=false;
