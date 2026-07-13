@@ -78,18 +78,26 @@
   }
   .tag{margin-top:14px;font-size:18px;font-weight:600;color:var(--muted)}
   .tag b{color:var(--grape-deep)}
-  /* Bewerkbare afrekening-titel: leest als kop, wordt een 'echt' invoerveld bij focus/hover. */
-  .tally-title{
-    display:block;margin:16px auto 0;width:min(100%,420px);
-    font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;text-align:center;color:var(--ink);
-    background:transparent;border:2.5px dashed transparent;border-radius:12px;
-    padding:6px 12px;outline:none;transition:border-color .15s,background-color .15s;
+  /* Afrekening-titel als speelse sticker/pill. */
+  .tally-pill{
+    display:inline-flex;align-items:center;gap:8px;margin:18px auto 0;
+    background:var(--lemon);color:var(--on-accent);
+    border:2.5px solid var(--ink);border-radius:40px;box-shadow:var(--shadow-hard);
+    padding:9px 18px;cursor:text;max-width:calc(100% - 8px);
+    transition:transform .1s,box-shadow .1s;
   }
-  .tally-title::placeholder{color:var(--faint);font-weight:600;font-family:'Nunito',sans-serif;font-size:16px}
-  .tally-title:hover{border-color:var(--line)}
-  .tally-title:focus{border-color:var(--grape);border-style:solid;background:var(--card)}
+  .tally-pill:hover{transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)}
+  .tally-pill:focus-within{box-shadow:6px 6px 0 var(--ink)}
+  .tally-ic{font-size:16px;line-height:1;flex-shrink:0}
+  .tally-pill .tally-title{
+    font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;color:var(--on-accent);
+    background:transparent;border:none;outline:none;padding:0;text-align:center;box-shadow:none;
+    width:22ch;max-width:100%;field-sizing:content;min-width:8ch;
+  }
+  .tally-pill .tally-title:focus{box-shadow:none;transform:none}
+  .tally-title::placeholder{color:#6f6a45;font-weight:600;opacity:.85}
   .tally-title-static{
-    margin:16px auto 0;max-width:520px;text-align:center;
+    margin:18px auto 0;max-width:520px;text-align:center;
     font-family:'Fredoka',sans-serif;font-weight:600;font-size:24px;color:var(--ink);
   }
 
@@ -444,8 +452,11 @@
   </div>
   <div class="logo">Splitsie<span class="dot"></span></div>
   <p class="tag" data-i18n-html="tag">Gooi de bonnetjes op tafel — wij rekenen uit <b>wie wat aan wie betaalt</b>.</p>
-  <input type="text" id="tallyTitle" class="tally-title" maxlength="48" autocomplete="off" data-i18n-ph="titlePlaceholder" placeholder="Geef deze afrekening een naam…">
-  <h2 id="tallyTitleStatic" class="tally-title-static hidden"></h2>
+  <label class="tally-pill" id="tallyPill" for="tallyTitle">
+    <span class="tally-ic" aria-hidden="true">🏷️</span>
+    <input type="text" id="tallyTitle" class="tally-title" maxlength="48" autocomplete="off" data-i18n-ph="titlePlaceholder" placeholder="Naam afrekening…">
+  </label>
+  <div class="tally-title-static hidden" id="tallyTitleStatic"></div>
 </header>
 
 <div class="wrap">
@@ -596,7 +607,7 @@ const LOCALES={nl:'nl-NL',en:'en-IE',fr:'fr-FR',de:'de-DE',es:'es-ES',zh:'zh-CN'
 const I18N={
   nl:{
     tag:'Gooi de bonnetjes op tafel — wij rekenen uit <b>wie wat aan wie betaalt</b>.',
-    titlePlaceholder:'Geef deze afrekening een naam…',untitled:'Afrekening',
+    titlePlaceholder:'Naam afrekening…',untitled:'Afrekening',
     themeDark:'Donker',themeLight:'Licht',themeAria:'Wissel tussen licht en donker thema',langAria:'Kies een taal',
     bannerTitle:'Je bekijkt een gedeelde afrekening.',
     bannerText:'Wijzigingen worden niet bewaard. Wil je zelf verder rekenen? Maak dan een eigen kopie.',
@@ -636,7 +647,7 @@ const I18N={
   },
   en:{
     tag:'Drop the receipts on the table — we work out <b>who owes what to whom</b>.',
-    titlePlaceholder:'Give this tally a name…',untitled:'Tally',
+    titlePlaceholder:'Name this tally…',untitled:'Tally',
     themeDark:'Dark',themeLight:'Light',themeAria:'Switch between light and dark theme',langAria:'Choose a language',
     bannerTitle:'You\u2019re viewing a shared tally.',
     bannerText:'Changes aren\u2019t saved. Want to keep working on it yourself? Make your own copy.',
@@ -676,7 +687,7 @@ const I18N={
   },
   fr:{
     tag:'Posez les tickets sur la table — on calcule <b>qui doit quoi à qui</b>.',
-    titlePlaceholder:'Donnez un nom à ce décompte…',untitled:'Décompte',
+    titlePlaceholder:'Nom du décompte…',untitled:'Décompte',
     themeDark:'Sombre',themeLight:'Clair',themeAria:'Basculer entre thème clair et sombre',langAria:'Choisir une langue',
     bannerTitle:'Vous consultez un décompte partagé.',
     bannerText:'Les modifications ne sont pas enregistrées. Vous voulez continuer vous-même ? Faites votre propre copie.',
@@ -716,7 +727,7 @@ const I18N={
   },
   de:{
     tag:'Legt die Belege auf den Tisch — wir rechnen aus, <b>wer wem was schuldet</b>.',
-    titlePlaceholder:'Gib dieser Abrechnung einen Namen…',untitled:'Abrechnung',
+    titlePlaceholder:'Name der Abrechnung…',untitled:'Abrechnung',
     themeDark:'Dunkel',themeLight:'Hell',themeAria:'Zwischen hellem und dunklem Thema wechseln',langAria:'Sprache wählen',
     bannerTitle:'Du siehst eine geteilte Abrechnung.',
     bannerText:'Änderungen werden nicht gespeichert. Selbst weiterrechnen? Dann erstelle eine eigene Kopie.',
@@ -756,7 +767,7 @@ const I18N={
   },
   es:{
     tag:'Pon los recibos sobre la mesa — calculamos <b>quién le debe qué a quién</b>.',
-    titlePlaceholder:'Ponle un nombre a esta cuenta…',untitled:'Cuenta',
+    titlePlaceholder:'Nombre de la cuenta…',untitled:'Cuenta',
     themeDark:'Oscuro',themeLight:'Claro',themeAria:'Cambiar entre tema claro y oscuro',langAria:'Elegir un idioma',
     bannerTitle:'Estás viendo una cuenta compartida.',
     bannerText:'Los cambios no se guardan. ¿Quieres seguir tú mismo? Haz tu propia copia.',
@@ -796,7 +807,7 @@ const I18N={
   },
   zh:{
     tag:'把账单放到桌上 —— 我们帮你算清<b>谁欠谁多少</b>。',
-    titlePlaceholder:'给这份账单起个名字…',untitled:'账单',
+    titlePlaceholder:'账单名称…',untitled:'账单',
     themeDark:'深色',themeLight:'浅色',themeAria:'切换浅色和深色主题',langAria:'选择语言',
     bannerTitle:'你正在查看一份共享的账单。',
     bannerText:'修改不会被保存。想自己继续算？请创建一份自己的副本。',
@@ -1596,7 +1607,7 @@ function enterReadOnly(data){
   document.querySelector('.card').classList.add('hidden'); // people-card (eerste .card)
   $('#shareLink').classList.add('hidden'); // niet opnieuw delen; kopiëren mag wel
   // Titel als statische kop (niet bewerkbaar) tonen.
-  $('#tallyTitle').classList.add('hidden');
+  $('#tallyPill').classList.add('hidden');
   const stat=$('#tallyTitleStatic');
   if(tallyName){stat.textContent=tallyName;stat.classList.remove('hidden');}
 }
@@ -1609,7 +1620,7 @@ function makeEditableCopy(){
   document.querySelector('.card').classList.remove('hidden');
   $('#shareLink').classList.remove('hidden');
   $('#tallyTitleStatic').classList.add('hidden');
-  $('#tallyTitle').classList.remove('hidden');
+  $('#tallyPill').classList.remove('hidden');
   syncTallyTitle();
   pid=Math.max(0,...people.map(p=>p.id));
   eid=Math.max(0,...expenses.map(x=>x.id));
