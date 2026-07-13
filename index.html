@@ -78,6 +78,20 @@
   }
   .tag{margin-top:14px;font-size:18px;font-weight:600;color:var(--muted)}
   .tag b{color:var(--grape-deep)}
+  /* Bewerkbare afrekening-titel: leest als kop, wordt een 'echt' invoerveld bij focus/hover. */
+  .tally-title{
+    display:block;margin:16px auto 0;width:min(100%,420px);
+    font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;text-align:center;color:var(--ink);
+    background:transparent;border:2.5px dashed transparent;border-radius:12px;
+    padding:6px 12px;outline:none;transition:border-color .15s,background-color .15s;
+  }
+  .tally-title::placeholder{color:var(--faint);font-weight:600;font-family:'Nunito',sans-serif;font-size:16px}
+  .tally-title:hover{border-color:var(--line)}
+  .tally-title:focus{border-color:var(--grape);border-style:solid;background:var(--card)}
+  .tally-title-static{
+    margin:16px auto 0;max-width:520px;text-align:center;
+    font-family:'Fredoka',sans-serif;font-weight:600;font-size:24px;color:var(--ink);
+  }
 
   /* ---------- Cards ---------- */
   .card{
@@ -430,6 +444,8 @@
   </div>
   <div class="logo">Splitsie<span class="dot"></span></div>
   <p class="tag" data-i18n-html="tag">Gooi de bonnetjes op tafel — wij rekenen uit <b>wie wat aan wie betaalt</b>.</p>
+  <input type="text" id="tallyTitle" class="tally-title" maxlength="48" autocomplete="off" data-i18n-ph="titlePlaceholder" placeholder="Geef deze afrekening een naam…">
+  <h2 id="tallyTitleStatic" class="tally-title-static hidden"></h2>
 </header>
 
 <div class="wrap">
@@ -559,6 +575,7 @@ let people=[];      // {id,name,color}
 //  - 'some'   → alleen shareIds delen gelijk
 //  - 'custom' → custom{personId:euro} bedragen, moeten optellen tot amount
 let expenses=[];
+let tallyName='';   // optionele naam van de afrekening
 let splitMode='all';
 let editingId=null; // id of expense being edited, or null
 let readOnly=false; // true wanneer via deel-link geopend
@@ -579,6 +596,7 @@ const LOCALES={nl:'nl-NL',en:'en-IE',fr:'fr-FR',de:'de-DE',es:'es-ES',zh:'zh-CN'
 const I18N={
   nl:{
     tag:'Gooi de bonnetjes op tafel — wij rekenen uit <b>wie wat aan wie betaalt</b>.',
+    titlePlaceholder:'Geef deze afrekening een naam…',untitled:'Afrekening',
     themeDark:'Donker',themeLight:'Licht',themeAria:'Wissel tussen licht en donker thema',langAria:'Kies een taal',
     bannerTitle:'Je bekijkt een gedeelde afrekening.',
     bannerText:'Wijzigingen worden niet bewaard. Wil je zelf verder rekenen? Maak dan een eigen kopie.',
@@ -618,6 +636,7 @@ const I18N={
   },
   en:{
     tag:'Drop the receipts on the table — we work out <b>who owes what to whom</b>.',
+    titlePlaceholder:'Give this tally a name…',untitled:'Tally',
     themeDark:'Dark',themeLight:'Light',themeAria:'Switch between light and dark theme',langAria:'Choose a language',
     bannerTitle:'You\u2019re viewing a shared tally.',
     bannerText:'Changes aren\u2019t saved. Want to keep working on it yourself? Make your own copy.',
@@ -657,6 +676,7 @@ const I18N={
   },
   fr:{
     tag:'Posez les tickets sur la table — on calcule <b>qui doit quoi à qui</b>.',
+    titlePlaceholder:'Donnez un nom à ce décompte…',untitled:'Décompte',
     themeDark:'Sombre',themeLight:'Clair',themeAria:'Basculer entre thème clair et sombre',langAria:'Choisir une langue',
     bannerTitle:'Vous consultez un décompte partagé.',
     bannerText:'Les modifications ne sont pas enregistrées. Vous voulez continuer vous-même ? Faites votre propre copie.',
@@ -696,6 +716,7 @@ const I18N={
   },
   de:{
     tag:'Legt die Belege auf den Tisch — wir rechnen aus, <b>wer wem was schuldet</b>.',
+    titlePlaceholder:'Gib dieser Abrechnung einen Namen…',untitled:'Abrechnung',
     themeDark:'Dunkel',themeLight:'Hell',themeAria:'Zwischen hellem und dunklem Thema wechseln',langAria:'Sprache wählen',
     bannerTitle:'Du siehst eine geteilte Abrechnung.',
     bannerText:'Änderungen werden nicht gespeichert. Selbst weiterrechnen? Dann erstelle eine eigene Kopie.',
@@ -735,6 +756,7 @@ const I18N={
   },
   es:{
     tag:'Pon los recibos sobre la mesa — calculamos <b>quién le debe qué a quién</b>.',
+    titlePlaceholder:'Ponle un nombre a esta cuenta…',untitled:'Cuenta',
     themeDark:'Oscuro',themeLight:'Claro',themeAria:'Cambiar entre tema claro y oscuro',langAria:'Elegir un idioma',
     bannerTitle:'Estás viendo una cuenta compartida.',
     bannerText:'Los cambios no se guardan. ¿Quieres seguir tú mismo? Haz tu propia copia.',
@@ -774,6 +796,7 @@ const I18N={
   },
   zh:{
     tag:'把账单放到桌上 —— 我们帮你算清<b>谁欠谁多少</b>。',
+    titlePlaceholder:'给这份账单起个名字…',untitled:'账单',
     themeDark:'深色',themeLight:'浅色',themeAria:'切换浅色和深色主题',langAria:'选择语言',
     bannerTitle:'你正在查看一份共享的账单。',
     bannerText:'修改不会被保存。想自己继续算？请创建一份自己的副本。',
@@ -876,10 +899,12 @@ function renderPeople(){
   });
 }
 let renamingId=null; // persoon die in de modal wordt bewerkt
+let modalReturnFocus=null; // element waar de focus naar terugkeert bij sluiten
 function renamePerson(id){
   const p=people.find(x=>x.id===id);
   if(!p)return;
   renamingId=id;
+  modalReturnFocus=document.activeElement;
   const inp=$('#nameModalInput');
   inp.value=p.name;
   inp.placeholder=t('namePrompt');
@@ -889,6 +914,9 @@ function renamePerson(id){
 function closeNameModal(){
   renamingId=null;
   $('#nameModal').classList.add('hidden');
+  // Focus teruggeven aan het element dat de modal opende.
+  if(modalReturnFocus&&modalReturnFocus.focus){modalReturnFocus.focus();}
+  modalReturnFocus=null;
 }
 function saveNameModal(){
   const p=people.find(x=>x.id===renamingId);
@@ -929,17 +957,37 @@ function renderPayerOptions(){
   const menu=$('#payerMenu');
   if(menu){
     menu.innerHTML=people.map(p=>
-      `<button type="button" class="dd-opt${p.id===selectedPayerId?' sel':''}" role="option" data-pid="${p.id}">`+
+      `<button type="button" class="dd-opt${p.id===selectedPayerId?' sel':''}" role="option" tabindex="-1" aria-selected="${p.id===selectedPayerId}" data-pid="${p.id}">`+
       `<span class="av" style="background:${p.color}">${initials(p.name)}</span>`+
       `<span class="nm">${escapeHtml(p.name)}</span></button>`
     ).join('');
     menu.querySelectorAll('.dd-opt').forEach(o=>{
-      o.onclick=()=>{selectedPayerId=parseInt(o.dataset.pid);closePayerMenu();renderPayerOptions();};
+      o.onclick=()=>{selectedPayerId=parseInt(o.dataset.pid);closePayerMenu();renderPayerOptions();$('#payerBtn').focus();};
     });
   }
 }
-function openPayerMenu(){if(!people.length)return;$('#payerDropdown').classList.add('open');$('#payerBtn').setAttribute('aria-expanded','true');}
+function openPayerMenu(focusOpt){
+  if(!people.length)return;
+  $('#payerDropdown').classList.add('open');$('#payerBtn').setAttribute('aria-expanded','true');
+  if(focusOpt){
+    const menu=$('#payerMenu');
+    const sel=menu.querySelector('.dd-opt.sel')||menu.querySelector('.dd-opt');
+    if(sel)sel.focus();
+  }
+}
 function closePayerMenu(){$('#payerDropdown').classList.remove('open');$('#payerBtn').setAttribute('aria-expanded','false');}
+// Generieke pijltjes-/Escape-navigatie binnen een menu van knoppen.
+function menuKeydown(e,menuSel,triggerSel,closeFn){
+  const items=[...document.querySelectorAll(menuSel+' button')];
+  if(!items.length)return;
+  const i=items.indexOf(document.activeElement);
+  if(e.key==='ArrowDown'){e.preventDefault();items[(i+1)%items.length].focus();}
+  else if(e.key==='ArrowUp'){e.preventDefault();items[(i-1+items.length)%items.length].focus();}
+  else if(e.key==='Home'){e.preventDefault();items[0].focus();}
+  else if(e.key==='End'){e.preventDefault();items[items.length-1].focus();}
+  else if(e.key==='Escape'){e.preventDefault();closeFn();const tr=$(triggerSel);if(tr)tr.focus();}
+  else if(e.key==='Tab'){closeFn();}
+}
 function renderShareChecks(){
   const box=$('#shareChecks');
   // Bij bewerken van een "sommige"-uitgave: vink de opgeslagen personen aan; anders standaard alles aan.
@@ -1283,6 +1331,7 @@ function buildSummary(){
   const tx=minimizeTransfers(bal);
   const L=[];
   L.push(t('sumTitle'));
+  if(tallyName)L.push('— '+tallyName+' —');
   L.push('');
   L.push(t('sumTotal',{total:euro(total),n:people.length,pp:euro(perHead)}));
   L.push('');
@@ -1356,14 +1405,28 @@ $('#copySummary').onclick=copySummary;
 $('#shareLink').onclick=shareViaLink;
 $('#clearAll').onclick=clearAll;
 $('#makeCopy').onclick=makeEditableCopy;
+// Afrekening-titel: opslaan bij typen (licht ontdubbeld met een korte debounce).
+let titleSaveTimer=null;
+$('#tallyTitle').addEventListener('input',e=>{
+  tallyName=e.target.value.trim().slice(0,48);
+  clearTimeout(titleSaveTimer);
+  titleSaveTimer=setTimeout(save,300);
+});
+$('#tallyTitle').addEventListener('blur',save);
 $('#tgAll').onclick=()=>setMode('all');
 $('#tgSome').onclick=()=>setMode('some');
 $('#tgCustom').onclick=()=>setMode('custom');
 // Betaald-door dropdown
 $('#payerBtn').onclick=e=>{
   e.stopPropagation();
-  $('#payerDropdown').classList.contains('open')?closePayerMenu():openPayerMenu();
+  $('#payerDropdown').classList.contains('open')?closePayerMenu():openPayerMenu(true);
 };
+$('#payerBtn').addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='Enter'||e.key===' '){
+    e.preventDefault();openPayerMenu(true);
+  }else if(e.key==='Escape'){closePayerMenu();}
+});
+$('#payerMenu').addEventListener('keydown',e=>menuKeydown(e,'#payerMenu','#payerBtn',closePayerMenu));
 document.addEventListener('click',e=>{
   if(!e.target.closest('#payerDropdown'))closePayerMenu();
 });
@@ -1372,7 +1435,17 @@ $('#nameModalSave').onclick=saveNameModal;
 $('#nameModalCancel').onclick=closeNameModal;
 $('#nameModalInput').addEventListener('keydown',e=>{
   if(e.key==='Enter')saveNameModal();
-  else if(e.key==='Escape')closeNameModal();
+});
+// Focus binnen de modal houden (focus trap) + Escape sluit overal in de modal.
+$('#nameModal').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeNameModal();return;}
+  if(e.key==='Tab'){
+    const f=[$('#nameModalInput'),$('#nameModalCancel'),$('#nameModalSave')];
+    const i=f.indexOf(document.activeElement);
+    e.preventDefault();
+    const next=e.shiftKey?(i-1+f.length)%f.length:(i+1)%f.length;
+    f[next].focus();
+  }
 });
 $('#nameModal').addEventListener('click',e=>{
   if(e.target.id==='nameModal')closeNameModal(); // klik op de achtergrond sluit
@@ -1381,20 +1454,28 @@ $('#nameModal').addEventListener('click',e=>{
 $('#qrBtn').onclick=openQrModal;
 $('#qrClose').onclick=closeQrModal;
 $('#qrModal').addEventListener('click',e=>{if(e.target.id==='qrModal')closeQrModal();});
+$('#qrModal').addEventListener('keydown',e=>{if(e.key==='Escape')closeQrModal();});
 
 /* ---------- QR-code ---------- */
 function qrAvailable(){return typeof QRCode!=='undefined';}
+let qrReturnFocus=null;
 function openQrModal(){
   if(!people.length||!expenses.length){flash('#qrBtn');return;}
   if(!qrAvailable()){flash('#qrBtn');return;}
+  qrReturnFocus=document.activeElement;
   const holder=$('#qrHolder');
   holder.innerHTML='';
   const url=buildShareUrl();
   // Donkere QR op lichte achtergrond leest het best, ook in dark mode.
   new QRCode(holder,{text:url,width:220,height:220,colorDark:'#2b2a3d',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
   $('#qrModal').classList.remove('hidden');
+  $('#qrClose').focus();
 }
-function closeQrModal(){$('#qrModal').classList.add('hidden');}
+function closeQrModal(){
+  $('#qrModal').classList.add('hidden');
+  if(qrReturnFocus&&qrReturnFocus.focus)qrReturnFocus.focus();
+  qrReturnFocus=null;
+}
 
 /* ---------- Confetti (feestje bij gelijkstand) ---------- */
 function launchConfetti(){
@@ -1422,7 +1503,7 @@ function launchConfetti(){
 /* ---------- Persistentie (localStorage) ---------- */
 function save(){
   if(readOnly)return; // gedeelde weergave nooit opslaan
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({people,expenses,pid,eid}));}catch(e){}
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({people,expenses,pid,eid,tallyName}));}catch(e){}
 }
 function loadFromStorage(){
   let raw=null;
@@ -1431,6 +1512,7 @@ function loadFromStorage(){
   try{
     const d=JSON.parse(raw);
     ({people,expenses}=normalize(d));
+    tallyName=typeof d.tallyName==='string'?d.tallyName:'';
     pid=d.pid||Math.max(0,...people.map(p=>p.id));
     eid=d.eid||Math.max(0,...expenses.map(x=>x.id));
     return true;
@@ -1457,6 +1539,7 @@ function normalize(d){
 // Compacte payload → base64 in de URL-hash (#s=...). Geen server nodig.
 function buildShareUrl(){
   const payload={
+    t:tallyName||'',
     p:people.map(p=>[p.id,p.name,p.color]),
     e:expenses.map(x=>[x.id,x.what,x.amount,x.payerId,x.split,x.shareIds||[],x.custom||0])
   };
@@ -1472,7 +1555,7 @@ function parseShareData(b64){
     id:a[0],what:a[1],amount:a[2],payerId:a[3],
     split:a[4],shareIds:a[5]||[],custom:a[6]||null
   }));
-  return{people,expenses};
+  return{people,expenses,tallyName:typeof d.t==='string'?d.t:''};
 }
 // Is dit een aanraakapparaat (telefoon/tablet)? Dan is het systeem-deelmenu handig.
 // Op desktop kopiëren we liever direct naar het klembord.
@@ -1505,12 +1588,17 @@ function copyText(text,done){
 function enterReadOnly(data){
   readOnly=true;
   people=data.people;expenses=data.expenses;
+  tallyName=data.tallyName||'';
   document.body.classList.add('is-shared');
   $('#sharedBanner').classList.remove('hidden');
   // Invoer-secties verbergen: je bekijkt andermans afrekening.
   $('#expenseCard').classList.add('hidden');
   document.querySelector('.card').classList.add('hidden'); // people-card (eerste .card)
   $('#shareLink').classList.add('hidden'); // niet opnieuw delen; kopiëren mag wel
+  // Titel als statische kop (niet bewerkbaar) tonen.
+  $('#tallyTitle').classList.add('hidden');
+  const stat=$('#tallyTitleStatic');
+  if(tallyName){stat.textContent=tallyName;stat.classList.remove('hidden');}
 }
 function makeEditableCopy(){
   // Zet de gedeelde data om in een eigen, bewerkbare (opgeslagen) afrekening.
@@ -1520,6 +1608,9 @@ function makeEditableCopy(){
   $('#expenseCard').classList.remove('hidden');
   document.querySelector('.card').classList.remove('hidden');
   $('#shareLink').classList.remove('hidden');
+  $('#tallyTitleStatic').classList.add('hidden');
+  $('#tallyTitle').classList.remove('hidden');
+  syncTallyTitle();
   pid=Math.max(0,...people.map(p=>p.id));
   eid=Math.max(0,...expenses.map(x=>x.id));
   history.replaceState(null,'',location.origin+location.pathname); // hash weghalen
@@ -1529,11 +1620,18 @@ function makeEditableCopy(){
 
 /* ---------- Alles wissen ---------- */
 function clearAll(){
-  if(!people.length&&!expenses.length)return;
+  if(!people.length&&!expenses.length&&!tallyName)return;
   if(!confirm(t('confirmClear')))return;
-  people=[];expenses=[];pid=0;eid=0;editingId=null;
+  people=[];expenses=[];pid=0;eid=0;editingId=null;tallyName='';
+  $('#tallyTitle').value='';
   try{localStorage.removeItem(STORAGE_KEY);}catch(e){}
   cancelEdit();renderAll();
+}
+
+/* ---------- Afrekening-titel ---------- */
+function syncTallyTitle(){
+  const inp=$('#tallyTitle');
+  if(inp&&inp.value!==tallyName)inp.value=tallyName;
 }
 
 /* ---------- Theme ---------- */
@@ -1580,10 +1678,10 @@ function applyStaticI18n(){
 function buildLangMenu(){
   const menu=$('#langMenu');
   menu.innerHTML=LANGS.map(l=>
-    `<button class="lang-opt${l.code===lang?' active':''}" role="menuitem" data-lang="${l.code}"><span class="lf">${l.flag}</span>${l.name}</button>`
+    `<button class="lang-opt${l.code===lang?' active':''}" role="menuitem" tabindex="-1" data-lang="${l.code}"><span class="lf">${l.flag}</span>${l.name}</button>`
   ).join('');
   menu.querySelectorAll('.lang-opt').forEach(b=>{
-    b.onclick=()=>{setLang(b.dataset.lang);closeLangMenu();};
+    b.onclick=()=>{setLang(b.dataset.lang);closeLangMenu();$('#langToggle').focus();};
   });
 }
 function setLang(code){
@@ -1594,12 +1692,24 @@ function setLang(code){
   applyStaticI18n();
   renderAll(); // dynamische teksten opnieuw opbouwen in de nieuwe taal
 }
-function openLangMenu(){$('#langMenu').classList.add('open');$('#langToggle').setAttribute('aria-expanded','true');}
+function openLangMenu(focusOpt){
+  $('#langMenu').classList.add('open');$('#langToggle').setAttribute('aria-expanded','true');
+  if(focusOpt){
+    const menu=$('#langMenu');
+    const sel=menu.querySelector('.lang-opt.active')||menu.querySelector('.lang-opt');
+    if(sel)sel.focus();
+  }
+}
 function closeLangMenu(){$('#langMenu').classList.remove('open');$('#langToggle').setAttribute('aria-expanded','false');}
 $('#langToggle').onclick=e=>{
   e.stopPropagation();
   $('#langMenu').classList.contains('open')?closeLangMenu():openLangMenu();
 };
+$('#langToggle').addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='Enter'||e.key===' '){e.preventDefault();openLangMenu(true);}
+  else if(e.key==='Escape'){closeLangMenu();}
+});
+$('#langMenu').addEventListener('keydown',e=>menuKeydown(e,'#langMenu','#langToggle',closeLangMenu));
 document.addEventListener('click',e=>{
   if(!e.target.closest('.lang-wrap'))closeLangMenu();
 });
@@ -1626,6 +1736,7 @@ function initLang(){
     }catch(e){/* ongeldige link → val terug op normale modus */}
   }
   loadFromStorage();
+  syncTallyTitle();
   renderAll();
 })();
 </script>
