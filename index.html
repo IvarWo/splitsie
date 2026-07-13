@@ -81,7 +81,7 @@
   /* Afrekening-titel als speelse sticker/pill. */
   .tally-pill{
     display:inline-flex;align-items:center;gap:8px;margin:18px auto 0;
-    background:var(--lemon);color:var(--on-accent);
+    background:var(--mint);color:var(--on-accent);
     border:2.5px solid var(--ink);border-radius:40px;box-shadow:var(--shadow-hard);
     padding:9px 18px;cursor:text;max-width:calc(100% - 8px);
     transition:transform .1s,box-shadow .1s;
@@ -95,7 +95,7 @@
     width:22ch;max-width:100%;field-sizing:content;min-width:8ch;
   }
   .tally-pill .tally-title:focus{box-shadow:none;transform:none}
-  .tally-title::placeholder{color:#6f6a45;font-weight:600;opacity:.85}
+  .tally-title::placeholder{color:#3f6b60;font-weight:600;opacity:.85}
   .tally-title-static{
     margin:18px auto 0;max-width:520px;text-align:center;
     font-family:'Fredoka',sans-serif;font-weight:600;font-size:24px;color:var(--ink);
@@ -453,7 +453,7 @@
   <div class="logo">Splitsie<span class="dot"></span></div>
   <p class="tag" data-i18n-html="tag">Gooi de bonnetjes op tafel — wij rekenen uit <b>wie wat aan wie betaalt</b>.</p>
   <label class="tally-pill" id="tallyPill" for="tallyTitle">
-    <span class="tally-ic" aria-hidden="true">🏷️</span>
+    <span class="tally-ic" aria-hidden="true">✏️</span>
     <input type="text" id="tallyTitle" class="tally-title" maxlength="48" autocomplete="off" data-i18n-ph="titlePlaceholder" placeholder="Naam afrekening…">
   </label>
   <div class="tally-title-static hidden" id="tallyTitleStatic"></div>
